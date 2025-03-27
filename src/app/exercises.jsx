@@ -6,7 +6,6 @@ import { Exercises } from "../presenters/exercisesPresenter"
 export default observer(function IndexPage() {
   return (
       <View style={{ flex: 1 }}>
-        {/* <Training model={reactiveModel}></Training> */}
         <Exercises model={reactiveModel}></Exercises>
       </View>
   )

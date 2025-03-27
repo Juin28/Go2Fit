@@ -6,7 +6,6 @@ import { Report } from "../presenters/reportPresenter"
 export default observer(function SearchPage() {
   return (
       <View>
-        {/* <Search model={reactiveModel}></Search> */}
         <Report model={reactiveModel}></Report>
       </View>
   )
