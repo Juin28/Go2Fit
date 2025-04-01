@@ -13,7 +13,6 @@ export function SummaryView(props) {
             <View testID="summary-row" style={styles.card}>
                 <View style={styles.left}>
                     <Text style={styles.ingredientName}>
-                        {/* {capitalizeFirstLetter(ingr.name)} */}
                         {ingr.name}
                     </Text>
                     <Text style={styles.ingredientAisle}>{ingr.aisle}</Text>

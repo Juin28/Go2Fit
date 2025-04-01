@@ -12,6 +12,7 @@ const renderTabIcon = (emoji) => () => (
 )
 
 export default observer(function RootLayout() {
+
   return (
     <>
       {reactiveModel.ready ? (
@@ -24,6 +25,14 @@ export default observer(function RootLayout() {
         >
           <Tabs.Screen
             name="index"
+            options={{
+              title: "Home",
+              tabBarIcon: renderTabIcon("🏠"),
+            }}
+          />
+
+          <Tabs.Screen
+            name="training"
             options={{
               title: "Training",
               tabBarIcon: renderTabIcon("🏋️"),

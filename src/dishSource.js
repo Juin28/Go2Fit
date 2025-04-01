@@ -39,6 +39,52 @@ export function searchDishes(searchParams) {
   }
 }
 
+export function searchExercises(searchParams) {
+  // Base URL for the API
+  const BASE_URL = "https://exercisedb-api.vercel.app/api/v1";
+
+  // Determine which endpoint to use based on the search parameters
+  let endpoint;
+  if (searchParams.id) {
+    endpoint = `${BASE_URL}/exercises/${searchParams.id}`;
+  } else if (searchParams.bodyPart) {
+    endpoint = `${BASE_URL}/bodyparts/${encodeURIComponent(searchParams.bodyPart)}/exercises`;
+  } else if (searchParams.equipment) {
+    endpoint = `${BASE_URL}/equipments/${encodeURIComponent(searchParams.equipment)}/exercises`;
+  } else if (searchParams.target) {
+    endpoint = `${BASE_URL}/muscles/${encodeURIComponent(searchParams.target)}/exercises`;
+  } else {
+    // Default to all exercises if no specific parameter is provided
+    endpoint = `${BASE_URL}/exercises`;
+    // endpoint = `${BASE_URL}/exercises?limit=1000`;
+  }
+
+  return fetch(endpoint, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then(handleResponse)
+    .then(processExerciseData);
+
+  function handleResponse(response) {
+    if (!response.ok) {
+      throw new Error(`ExerciseDB API failed: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  function processExerciseData(apiResponse) {
+    // For single exercise by ID, return as array with one item
+    if (searchParams.id) {
+      return [apiResponse];
+    }
+    // For all other cases, return the array directly
+    return apiResponse || [];
+  }
+}
+
 export function getMenuDetails(ids_array) {
   if (!Array.isArray(ids_array)) {
     throw new Error("ids_array must be an array")

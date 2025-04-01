@@ -1,6 +1,7 @@
 // initialize Firebase app
 import { initializeApp } from "firebase/app";
 import { firebaseConfig } from "./firebaseConfig.js";
+import { getAuth } from "firebase/auth";
 import { getDishDetails } from "./dishSource";
 const app = initializeApp(firebaseConfig);
 
@@ -20,10 +21,6 @@ const COLLECTION = "dinnerModel47";
 // TODO: read the code above
 // TODO: export the function connectToPersistence, it can be empty for starters
 export function connectToPersistence(model, watchFunction) {
-  // Set model.ready to false if it is not already defined before reading to prevent race conditions
-  // const modelReadyState = model.ready;
-  // model.ready = modelReadyState || false;
-  // model.ready = false;
 
   // Define the first callback to watch relevant properties
   function watchModelPropertiesACB() {
@@ -61,19 +58,6 @@ export function connectToPersistence(model, watchFunction) {
       if (data && Object.keys(data).length > 0) { // Check for existence based on data
         model.numberOfGuests = data.numberOfGuests || 2; // Default to 2 if undefined
 
-        // const dishIds = data.dishes || [];
-        // let dishObjects = [];
-        // if (dishIds.length > 0) {
-        //     dishObjects = await Promise.all(
-        //         dishIds.map(async (dish) => {
-        //             const dishDetails = await getDishDetails(dish.id);
-        //             return dishDetails; // Return the full dish object
-        //         })
-        //     );
-        // }
-        // // Ensure the dishes are mapped correctly to maintain structure
-        // // model.dishes = dishObjects.map(dish => ({ id: dish.id })); 
-        // model.dishes = dishObjects;
         model.dishes = data.dishes || [];
 
         model.currentDishId = data.currentDishId || null; // Handle undefined
@@ -93,11 +77,11 @@ export function connectToPersistence(model, watchFunction) {
     }
   }
 
-  // Call the watch function with the defined callbacks
-  // watchFunction(watchModelPropertiesACB, persistModelChangesACB);
-
   // After setting up the watcher, read the model from Firestore
   readModelFromFirestore();
 
   return disposer;
 }
+
+export const FIREBASE_AUTH = getAuth(app);
+export const FIREBASE_DB = db;

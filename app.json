@@ -1,5 +1,6 @@
 {
   "expo": {
+    "platforms": ["ios", "android", "web"],
     "name": "Go2Fit",
     "slug": "Go2Fit",
     "version": "1.0.0",

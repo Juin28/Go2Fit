@@ -20,23 +20,16 @@ export const Search = observer(function SummaryRender(props) {
   const dishTypeOptions = ["starter", "main course", "dessert"]
 
   function onQueryChangeACB(query) {
-    // console.log(`Set query to ${query}`);
     model.setSearchQuery(query)
-    // console.log(`Query is now ${model.searchParams.query}`);
   }
 
   function onTypeChangeACB(type) {
-    // console.log(`Set type to ${type}`);
     model.setSearchType(type)
-    // console.log(`Type is now ${model.searchParams.type}`);
   }
 
   async function onSearchDishACB() {
-    // console.log(`In Presenter: ${model.searchParams.query}, ${model.searchParams.type}`);
     const { query, type } = model.searchParams
-    // await model.doSearch({ query: "pizza", type: "Main course" })
     await model.doSearch({ query, type })
-    // console.log(`Search results: ${model.searchResultsPromiseState.data.length}`);
   }
 
   function dishChosenACB(dish) {

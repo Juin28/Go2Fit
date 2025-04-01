@@ -1,10 +1,11 @@
+// Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 export const firebaseConfig = {
-    apiKey: "AIzaSyBcmOwJD5Wn5UDwZsBz7y79PAK8G3DFVx4",
-    authDomain: "id2216-dinner-planner.firebaseapp.com",
-    projectId: "id2216-dinner-planner",
-    storageBucket: "id2216-dinner-planner.firebasestorage.app",
-    messagingSenderId: "1016088999471",
-    appId: "1:1016088999471:web:0ed2b58dd8056cc8b838da",
-    measurementId: "G-TKM81SZ70K"
+  apiKey: "AIzaSyCWaDHzfTlEB_sP8czYmHSnoXNFPqYxqrY",
+  authDomain: "go2fit-71d41.firebaseapp.com",
+  projectId: "go2fit-71d41",
+  storageBucket: "go2fit-71d41.firebasestorage.app",
+  messagingSenderId: "127181124077",
+  appId: "1:127181124077:web:51554922f0a7b422f177e4",
+  measurementId: "G-1M1YWVN1D0"
 };
