@@ -30,6 +30,12 @@ export const model = {
     this.trainingSessions = this.trainingSessions.filter(shouldWeKeepTrainingSessionCB)
   },
 
+  getCurrentSession() {
+    if (!this.currentTrainingSessionID) return null;
+    return this.trainingSessions.find(
+        session => session.id === this.currentTrainingSessionID
+    );
+},
 
 
 
