@@ -45,9 +45,11 @@ export function TrainingView() {
 
   const [session, setSession] = useState(() => {
     if (currentTrainingSessionID === null) {
-      const newId = Math.max(...global.trainingSessions.map(s => s.id), 0) + 1;
+      // The utilities function addNewSession in trainingSessionUtilities.js will add the new session to Firestore
+      // and return the sessionId, so we can use that Firestore-generated id instead
+      // So you don't need to generate your own id here, just include other fields except the id (by Yoyo)
+      // const newId = Math.max(...global.trainingSessions.map(s => s.id), 0) + 1; 
       const newSession = {
-        id: newId.toString(),
         name: `New training ${newId}`,
         exercisesList: [],
         exerciseCount: 0,
