@@ -1,15 +1,18 @@
 import { resolvePromise } from "./resolvePromise"
-import { searchDishes, getDishDetails, searchExercises } from "./dishSource"
+import { searchExercises } from "./dishSource"
 
-/* 
-   The Model keeps the state of the application (Application State). 
-   It is an abstract object, i.e. it knows nothing about graphics and interaction.
-*/
 export const model = {
   userID: null,
   trainingSessions: [],
   currentTrainingSessionID: null,
-
+  selectedExercises: [],
+  currentExercisePromiseState: { promise: null, data: null, error: null },
+  allExercises: [],
+  searchQuery: "",
+  searchFilters: {},
+  currentView: "home", // Add this for navigation tracking
+  ready: true, // For layout rendering
+  
   setUserID(userID) {
     this.userID = userID
   },
@@ -17,172 +20,142 @@ export const model = {
   setCurrentTrainingSessionID(trainingSessionID) {
     this.currentTrainingSessionID = trainingSessionID
   },
+  
+  // Add method to change current view
+  setCurrentView(viewName) {
+    this.currentView = viewName
+  },
 
   addTrainingSession(trainingSession) {
     this.trainingSessions = [...this.trainingSessions, trainingSession]
   },
 
-  removeTrainingSession(trainingSession) {
-    function shouldWeKeepTrainingSessionCB(trainingSession) {
-      return trainingSession.id !== trainingSession.id
+  removeTrainingSession(trainingSessionToRemove) {
+    this.trainingSessions = this.trainingSessions.filter(
+      trainingSession => trainingSession.id !== trainingSessionToRemove.id
+    )
+  },
+  
+  // Your existing method for adding exercise to session
+  addExerciseToCurrentSession(exercise) {
+    console.log("addExerciseToCurrentSession called with:", exercise?.name)
+    
+    // If no session is selected, create a new one
+    if (!this.currentTrainingSessionID) {
+      console.log("No current session ID, creating new session")
+      const existingIds = this.trainingSessions.map(s => s.id) || []
+      console.log("Existing session IDs:", existingIds)
+      
+      const newId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1
+      console.log("New session ID:", newId)
+      
+      const newSession = {
+        id: newId,
+        name: `New Training ${newId}`,
+        exercisesList: [],
+        isNew: true
+      }
+      console.log("New session created:", newSession)
+      
+      // Check if trainingSessions exists
+      if (!Array.isArray(this.trainingSessions)) {
+        console.error("trainingSessions is not an array, initializing as empty array")
+        this.trainingSessions = []
+      }
+      
+      this.trainingSessions.push(newSession)
+      console.log("New session added, total sessions:", this.trainingSessions.length)
+      this.currentTrainingSessionID = newId
+      console.log("Current training session ID set to:", newId)
     }
-
-    this.trainingSessions = this.trainingSessions.filter(shouldWeKeepTrainingSessionCB)
-  },
-
-
-
-
-
-  numberOfGuests: 2,
-  dishes: [],
-  currentDishId: null, // null means "intentionally empty"
-  searchParams: {},
-  searchResultsPromiseState: {},
-  currentDishPromiseState: {},
-
-  setCurrentDishId(dishId) {
-    this.currentDishId = dishId
-  },
-
-  setNumberOfGuests(number) {
-    if (!Number.isInteger(number) || number <= 0) {
-      throw new Error("number of guests not a positive integer")
+    
+    console.log("Looking for current session with ID:", this.currentTrainingSessionID)
+    
+    // Find the current session
+    const currentSession = this.trainingSessions.find(
+      s => s.id.toString() === this.currentTrainingSessionID.toString()
+    )
+    
+    console.log("Current session found:", currentSession ? "Yes" : "No")
+    
+    if (currentSession) {
+      // Ensure exercisesList exists
+      if (!Array.isArray(currentSession.exercisesList)) {
+        console.log("No exercisesList found, creating empty array")
+        currentSession.exercisesList = []
+      }
+      
+      console.log("Current exercisesList length:", currentSession.exercisesList.length)
+      
+      // Check if exercise exists by name
+      const exerciseExists = currentSession.exercisesList.some(
+        ex => ex.name === exercise.name
+      )
+      
+      console.log("Exercise already exists in session:", exerciseExists)
+      
+      if (!exerciseExists) {
+        console.log("Adding new exercise to session")
+        // Create a new exercise with safely accessed properties
+        const newExercise = {
+          id: Date.now().toString(),
+          name: exercise.name || "Unnamed Exercise",
+          targetMuscles: Array.isArray(exercise.targetMuscles) ? [...exercise.targetMuscles] : [],
+          bodyParts: Array.isArray(exercise.bodyParts) ? [...exercise.bodyParts] : [],
+          equipments: Array.isArray(exercise.equipments) ? [...exercise.equipments] : [],
+          sets: [{ weight: 0, reps: 5 }],
+          completedSets: 0
+        }
+        
+        console.log("New exercise object created:", newExercise)
+        
+        try {
+          currentSession.exercisesList.push(newExercise)
+          console.log("Exercise added successfully, new list length:", currentSession.exercisesList.length)
+        } catch (error) {
+          console.error("Error adding exercise to list:", error)
+          throw error
+        }
+      }
     } else {
-      this.numberOfGuests = number
+      console.error("No current session found with ID:", this.currentTrainingSessionID)
+    }
+    
+    return this.currentTrainingSessionID
+  },
+  
+  loadExercises() {
+    try {
+      // Create the promise from searchExercises
+      const promise = searchExercises({})
+      
+      if (!promise || typeof promise.then !== 'function') {
+        console.error("searchExercises is not returning a Promise:", promise)
+        return
+      }
+      
+      // Use resolvePromise which doesn't return the promise
+      resolvePromise(promise, this.currentExercisePromiseState)
+      
+      // Set up a separate .then handler on the original promise
+      promise.then(result => {
+        if (result && result.data && result.data.exercises) {
+          this.allExercises = result.data.exercises
+        }
+      }).catch(error => {
+        console.error("Error loading exercises:", error)
+      })
+      
+    } catch (error) {
+      console.error("Exception in loadExercises:", error)
     }
   },
-
-  addToMenu(dishToAdd) {
-    // array spread syntax exercise
-    // It sets this.dishes to a new array [   ] where we spread (...) the elements of the existing this.dishes
-    this.dishes = [...this.dishes, dishToAdd]
-  },
-
-  // filter callback exercise
-  removeFromMenu(dishToRemove) {
-    function shouldWeKeepDishCB(dish) {
-      return dish.id !== dishToRemove.id
+  
+  // Method to check if exercises are loaded
+  exercisesLoadedEffect() {
+    // This method will be called as a reaction effect
+    if (this.currentExercisePromiseState.data && this.allExercises.length === 0) {
+      this.allExercises = this.currentExercisePromiseState.data.exercises || []
     }
-
-    this.dishes = this.dishes.filter(shouldWeKeepDishCB)
-  },
-
-  // more methods will be added here, don't forget to separate them with comma!
-
-  setSearchQuery(query) {
-    if (!this.searchParams) {
-      this.searchParams = {};
-    }
-    this.searchParams.query = query; 
-  },
-
-  setSearchType(type) {
-    if (!this.searchParams) {
-      this.searchParams = {};
-    }
-    this.searchParams.type = type; 
-  },
-
-  async doSearch(params) {
-    // this.setSearchQuery(params.query)
-    // this.setSearchType(params.type)
-
-    // const promise = searchDishes(params);
-    const oldPromise = searchDishes(params);
-    resolvePromise(oldPromise, this.searchResultsPromiseState);
-
-    const promise = searchExercises(params);
-    resolvePromise(promise, this.searchResultsPromiseState);
-
-    // Wait for the promise to resolve to maintain the expected behavior
-    await promise;
-  },
-
-  currentDishEffect() {
-    if (!this.currentDishId) {
-      this.currentDishPromiseState.promise = null
-      this.currentDishPromiseState.data = null
-      this.currentDishPromiseState.error = null
-      return
-    }
-
-    const promise = getDishDetails(this.currentDishId);
-    resolvePromise(promise, this.currentDishPromiseState);
   }
 }
-
-// export const model = {
-//   numberOfGuests: 2,
-//   dishes: [],
-//   currentDishId: null, // null means "intentionally empty"
-//   searchParams: {},
-//   searchResultsPromiseState: {},
-//   currentDishPromiseState: {},
-
-//   setCurrentDishId(dishId) {
-//     this.currentDishId = dishId
-//   },
-
-//   setNumberOfGuests(number) {
-//     if (!Number.isInteger(number) || number <= 0) {
-//       throw new Error("number of guests not a positive integer")
-//     } else {
-//       this.numberOfGuests = number
-//     }
-//   },
-
-//   addToMenu(dishToAdd) {
-//     // array spread syntax exercise
-//     // It sets this.dishes to a new array [   ] where we spread (...) the elements of the existing this.dishes
-//     this.dishes = [...this.dishes, dishToAdd]
-//   },
-
-//   // filter callback exercise
-//   removeFromMenu(dishToRemove) {
-//     function shouldWeKeepDishCB(dish) {
-//       return dish.id !== dishToRemove.id
-//     }
-
-//     this.dishes = this.dishes.filter(shouldWeKeepDishCB)
-//   },
-
-//   // more methods will be added here, don't forget to separate them with comma!
-
-//   setSearchQuery(query) {
-//     if (!this.searchParams) {
-//       this.searchParams = {};
-//     }
-//     this.searchParams.query = query; 
-//   },
-
-//   setSearchType(type) {
-//     if (!this.searchParams) {
-//       this.searchParams = {};
-//     }
-//     this.searchParams.type = type; 
-//   },
-
-//   async doSearch(params) {
-//     // this.setSearchQuery(params.query)
-//     // this.setSearchType(params.type)
-
-//     const promise = searchDishes(params);
-//     resolvePromise(promise, this.searchResultsPromiseState);
-
-//     // Wait for the promise to resolve to maintain the expected behavior
-//     await promise;
-//   },
-
-//   currentDishEffect() {
-//     if (!this.currentDishId) {
-//       this.currentDishPromiseState.promise = null
-//       this.currentDishPromiseState.data = null
-//       this.currentDishPromiseState.error = null
-//       return
-//     }
-
-//     const promise = getDishDetails(this.currentDishId);
-//     resolvePromise(promise, this.currentDishPromiseState);
-//   }
-// }

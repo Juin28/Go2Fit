@@ -12,7 +12,6 @@ const renderTabIcon = (emoji) => () => (
 )
 
 export default observer(function RootLayout() {
-
   return (
     <>
       {reactiveModel.ready ? (
