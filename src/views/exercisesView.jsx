@@ -156,24 +156,18 @@ export function ExercisesView(props) {
     return result;
   }
 
-  // Update filtered exercises when filters change (side effect)
-  useEffect(() => {
-    const filtered = applyFiltersCB();
-    setFilteredExercises(filtered);
-  }, [selectedMuscles, selectedEquipments, selectedBodyParts, searchQuery, allExercises]);
-
   // ASYNCHRONOUS CALLBACKS
 
   // Handle exercise selection (asynchronous callback)
-  const handleExerciseSelectACB = (exercise) => {
+  function handleExerciseSelectACB(exercise) {
     console.log('Exercise selected:', exercise.name);
     if (onExerciseSelected) {
       onExerciseSelected(exercise);
     }
-  };
+  }
 
   // Toggle muscle filter selection (asynchronous callback)
-  const toggleMuscleSelectionACB = (muscle) => {
+  function toggleMuscleSelectionACB(muscle) {
     if (muscle === 'All') {
       setSelectedMuscles(['All']);
     } else {
@@ -191,10 +185,10 @@ export function ExercisesView(props) {
         }
       });
     }
-  };
+  }
 
   // Toggle equipment filter selection (asynchronous callback)
-  const toggleEquipmentSelectionACB = (equipment) => {
+  function toggleEquipmentSelectionACB(equipment) {
     if (equipment === 'All') {
       setSelectedEquipments(['All']);
     } else {
@@ -208,10 +202,10 @@ export function ExercisesView(props) {
         }
       });
     }
-  };
+  }
 
   // Toggle body part filter selection (asynchronous callback)
-  const toggleBodyPartSelectionACB = (bodyPart) => {
+  function toggleBodyPartSelectionACB(bodyPart) {
     if (bodyPart === 'All') {
       setSelectedBodyParts(['All']);
     } else {
@@ -225,18 +219,18 @@ export function ExercisesView(props) {
         }
       });
     }
-  };
+  }
 
   // Reset all filters (asynchronous callback)
-  const resetFiltersACB = () => {
+  function resetFiltersACB() {
     setSelectedMuscles(['All']);
     setSelectedEquipments(['All']);
     setSelectedBodyParts(['All']);
     setSearchQuery('');
-  };
+  }
 
   // Fetch first page of exercises (asynchronous callback with promise)
-  const fetchInitialExercisesACB = async (isRefresh = false) => {
+  async function fetchInitialExercisesACB(isRefresh = false) {
     try {
       if (isRefresh) {
         setIsRefreshing(true);
@@ -277,10 +271,10 @@ export function ExercisesView(props) {
       setIsRefreshing(false);
       setFetchComplete(true);
     }
-  };
+  }
 
   // Fetch remaining pages (asynchronous callback with promise)
-  const fetchRemainingExercisesACB = async (initialUrl, initialExercises, totalCount) => {
+  async function fetchRemainingExercisesACB(initialUrl, initialExercises, totalCount) {
     if (!initialUrl) {
       setFetchComplete(true);
       setIsLoading(false);
@@ -341,7 +335,13 @@ export function ExercisesView(props) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }
+
+  // Update filtered exercises when filters change (side effect)
+  useEffect(() => {
+    const filtered = applyFiltersCB();
+    setFilteredExercises(filtered);
+  }, [selectedMuscles, selectedEquipments, selectedBodyParts, searchQuery, allExercises]);
 
   // Initial fetch on component mount (side effect)
   useEffect(() => {
