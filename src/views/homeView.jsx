@@ -149,7 +149,7 @@ export function HomeView(props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.screenTitle}>HOME</Text>
+      <Text style={styles.screenTitle}>HOMEee</Text>
       
       <FlatList
         data={trainingSessions}
