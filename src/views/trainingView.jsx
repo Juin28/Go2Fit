@@ -9,26 +9,131 @@ import {
   Alert,
   Modal
 } from 'react-native';
+import { router } from 'expo-router'; // Import the router from expo-router
 
 export function TrainingView({ session, onAddExercise, onSave, error }) {
+  // Component State (unchanged)
   const [sessionName, setSessionName] = useState(session?.name || 'New Training Session');
   
-  // Timer states
+  // Timer states (unchanged)
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(session?.duration || 0);
   const timerInterval = useRef(null);
   
-  // Modal states for editing sets
+  // Modal states (unchanged)
   const [modalVisible, setModalVisible] = useState(false);
   const [editingExerciseIndex, setEditingExerciseIndex] = useState(null);
   const [editingSetIndex, setEditingSetIndex] = useState(null);
   const [editWeight, setEditWeight] = useState('0');
   const [editReps, setEditReps] = useState('0');
   
-  console.log("TrainingView rendered with session:", session);
+  // SYNCHRONOUS CALLBACKS (unchanged)
+  function formatTimeCB(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
   
-  // Timer functions
-  const startTimer = () => {
+  function calculateCompletionCB() {
+    if (!Array.isArray(exercisesList) || exercisesList.length === 0) {
+      return 0;
+    }
+    
+    let totalSets = 0;
+    let completedSets = 0;
+    
+    exercisesList.forEach(exercise => {
+      if (Array.isArray(exercise.sets)) {
+        totalSets += exercise.sets.length;
+        completedSets += exercise.completedSets || 0;
+      }
+    });
+    
+    return totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+  }
+  
+  function hasAnyCompletedSetsCB() {
+    if (!Array.isArray(exercisesList)) return false;
+    
+    return exercisesList.some(exercise => (exercise.completedSets || 0) > 0);
+  }
+  
+  // Transform exercise data to UI element (synchronous callback)
+  function exerciseToComponentCB(exercise, exerciseIndex) {
+    return (
+      <View key={exercise.id || exerciseIndex} style={styles.exerciseCard}>
+        <Text style={styles.exerciseName}>{exercise.name || 'Unnamed Exercise'}</Text>
+        
+        {Array.isArray(exercise.targetMuscles) && exercise.targetMuscles.length > 0 && (
+          <View style={styles.targetMuscleContainer}>
+            <Text style={styles.targetMuscleLabel}>Target: </Text>
+            <Text style={styles.targetMuscleValue}>{exercise.targetMuscles.join(', ')}</Text>
+          </View>
+        )}
+        
+        <View style={styles.setsContainer}>
+          <View style={styles.setsHeaderRow}>
+            <Text style={styles.setsHeader}>Sets:</Text>
+            <TouchableOpacity 
+              style={styles.addSetButton}
+              onPress={() => addSetACB(exerciseIndex)}
+            >
+              <Text style={styles.addSetButtonText}>+ Add Set</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {Array.isArray(exercise.sets) && exercise.sets.length > 0 ? (
+            exercise.sets.map((set, setIndex) => setToComponentCB(set, setIndex, exerciseIndex, exercise))
+          ) : (
+            <Text style={styles.noSetsText}>No sets defined</Text>
+          )}
+        </View>
+      </View>
+    );
+  }
+  
+  // Transform set data to UI element (synchronous callback)
+  function setToComponentCB(set, setIndex, exerciseIndex, exercise) {
+    return (
+      <View key={setIndex} style={styles.setItemContainer}>
+        <TouchableOpacity
+          style={[
+            styles.setItem,
+            (exercise.completedSets || 0) > setIndex && styles.completedSetItem
+          ]}
+          onPress={() => toggleSetCompletionACB(exerciseIndex, setIndex)}
+        >
+          <Text style={styles.setNumber}>Set {setIndex + 1}</Text>
+          <Text style={styles.setDetails}>
+            {set.weight > 0 ? `${set.weight} kg × ` : ''}{set.reps} reps
+          </Text>
+        </TouchableOpacity>
+        
+        <View style={styles.setActions}>
+          <TouchableOpacity 
+            style={styles.setActionButton}
+            onPress={() => openEditSetModalACB(exerciseIndex, setIndex)}
+          >
+            <Text style={styles.setActionButtonText}>Edit</Text>
+          </TouchableOpacity>
+          
+          {exercise.sets.length > 1 && (
+            <TouchableOpacity 
+              style={[styles.setActionButton, styles.deleteButton]}
+              onPress={() => deleteSetACB(exerciseIndex, setIndex)}
+            >
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  }
+  
+  // ASYNCHRONOUS CALLBACKS
+  
+  // Timer functions (asynchronous callbacks)
+  const startTimerACB = () => {
     if (timerRunning) return;
     
     setTimerRunning(true);
@@ -37,7 +142,7 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
     }, 1000);
   };
   
-  const pauseTimer = () => {
+  const pauseTimerACB = () => {
     if (!timerRunning) return;
     
     setTimerRunning(false);
@@ -46,19 +151,225 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
     }
   };
   
-  const resetTimer = () => {
-    pauseTimer();
+  const resetTimerACB = () => {
+    pauseTimerACB();
     setTimerSeconds(0);
   };
   
-  // Format seconds into MM:SS format
-  const formatTime = (totalSeconds) => {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  // Handle saving the session (asynchronous callback)
+  const handleSaveACB = () => {
+    const updatedSession = {
+      ...session,
+      name: sessionName,
+      duration: timerSeconds,
+    };
+    onSave(updatedSession);
+    Alert.alert('Success', 'Training session saved!');
   };
   
-  // Cleanup timer on unmount
+  // Add a new set to an exercise (asynchronous callback)
+  const addSetACB = (exerciseIndex) => {
+    if (!session || !Array.isArray(session.exercisesList)) {
+      console.error("Cannot add set: invalid session or exercisesList");
+      return;
+    }
+    
+    const exercise = session.exercisesList[exerciseIndex];
+    if (!exercise) {
+      console.error("Exercise not found at index:", exerciseIndex);
+      return;
+    }
+    
+    // Ensure sets array exists
+    if (!Array.isArray(exercise.sets)) {
+      exercise.sets = [];
+    }
+    
+    // Get values from the last set or use defaults
+    const lastSet = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1] : null;
+    const defaultWeight = lastSet ? lastSet.weight : 0;
+    const defaultReps = lastSet ? lastSet.reps : 8;
+    
+    // Add a new set (create a new object to trigger shallow comparison)
+    const updatedExercise = {
+      ...exercise,
+      sets: [...exercise.sets, { weight: defaultWeight, reps: defaultReps }]
+    };
+    
+    // Create a new session with the updated exercise (important for React shallow comparison)
+    const updatedExercisesList = [...session.exercisesList];
+    updatedExercisesList[exerciseIndex] = updatedExercise;
+    
+    const updatedSession = {
+      ...session,
+      exercisesList: updatedExercisesList
+    };
+    
+    // Save changes
+    if (onSave) {
+      onSave(updatedSession);
+    }
+  };
+  
+  // Open the edit set modal (asynchronous callback)
+  const openEditSetModalACB = (exerciseIndex, setIndex) => {
+    const exercise = session.exercisesList[exerciseIndex];
+    const set = exercise.sets[setIndex];
+    
+    setEditingExerciseIndex(exerciseIndex);
+    setEditingSetIndex(setIndex);
+    setEditWeight(set.weight.toString());
+    setEditReps(set.reps.toString());
+    setModalVisible(true);
+  };
+  
+  // Save the edited set (asynchronous callback)
+  const saveEditedSetACB = () => {
+    if (editingExerciseIndex === null || editingSetIndex === null) {
+      return;
+    }
+    
+    // Create a deep copy of the session to properly trigger updates
+    const updatedSession = JSON.parse(JSON.stringify(session));
+    const exercise = updatedSession.exercisesList[editingExerciseIndex];
+    
+    // Update the set with new values
+    exercise.sets[editingSetIndex] = {
+      weight: parseFloat(editWeight) || 0,
+      reps: parseInt(editReps, 10) || 0
+    };
+    
+    // Close modal and reset state
+    setModalVisible(false);
+    setEditingExerciseIndex(null);
+    setEditingSetIndex(null);
+    
+    // Save changes
+    if (onSave) {
+      onSave(updatedSession);
+    }
+  };
+  
+  // Delete a set (asynchronous callback)
+  const deleteSetACB = (exerciseIndex, setIndex) => {
+    // Create a deep copy of the session to properly trigger updates
+    const updatedSession = JSON.parse(JSON.stringify(session));
+    const exercise = updatedSession.exercisesList[exerciseIndex];
+    
+    // Remove the set
+    exercise.sets.splice(setIndex, 1);
+    
+    // If completedSets is greater than the number of sets, adjust it
+    if ((exercise.completedSets || 0) > exercise.sets.length) {
+      exercise.completedSets = exercise.sets.length;
+    }
+    
+    // Save changes
+    if (onSave) {
+      onSave(updatedSession);
+    }
+  };
+  
+  // Toggle set completion (asynchronous callback)
+  const toggleSetCompletionACB = (exerciseIndex, setIndex) => {
+    if (!session || !Array.isArray(session.exercisesList)) {
+      console.error("Cannot toggle set: invalid session or exercisesList");
+      return;
+    }
+    
+    // Create a deep copy of the session to properly trigger updates
+    const updatedSession = JSON.parse(JSON.stringify(session));
+    const exercise = updatedSession.exercisesList[exerciseIndex];
+    
+    if (!exercise) {
+      console.error("Exercise not found at index:", exerciseIndex);
+      return;
+    }
+    
+    // Calculate new completedSets count
+    let updatedCompletedSets = exercise.completedSets || 0;
+    
+    // Check if this set is already completed
+    const setCompleted = (updatedCompletedSets > setIndex);
+    
+    if (setCompleted) {
+      // Uncomplete this set and all sets after it
+      updatedCompletedSets = setIndex;
+    } else {
+      // Complete this set
+      updatedCompletedSets = setIndex + 1;
+    }
+    
+    // Update the exercise
+    exercise.completedSets = updatedCompletedSets;
+    
+    // Save changes
+    if (onSave) {
+      onSave(updatedSession);
+    }
+  };
+  
+  // Handle finishing the workout (asynchronous callback)
+  const finishWorkoutACB = () => {
+    // Pause timer
+    pauseTimerACB();
+    
+    console.log('Finish workout button pressed');
+    
+    // Create updated session with completed status
+    const updatedSession = {
+      ...session,
+      name: sessionName,
+      duration: timerSeconds,
+      completed: true,
+      completionDate: new Date().toISOString()
+    };
+    
+    // Save session before navigating
+    if (onSave) {
+      console.log('Saving session before navigation');
+      onSave(updatedSession);
+    }
+    
+    console.log('Attempting direct navigation to report tab...');
+    
+    // Try navigation without Alert confirmation
+    try {
+      // Use setTimeout to ensure the UI updates before navigation
+      setTimeout(() => {
+        console.log('Executing navigation to /report');
+        router.push('/report');
+      }, 300);
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+  
+  const markWorkoutCompleteACB = () => {
+    if (!session || !Array.isArray(session.exercisesList)) {
+      return;
+    }
+    
+    // Create a deep copy of the session to properly trigger updates
+    const updatedSession = JSON.parse(JSON.stringify(session));
+    
+    // Mark all sets as completed for all exercises
+    updatedSession.exercisesList.forEach(exercise => {
+      if (Array.isArray(exercise.sets)) {
+        exercise.completedSets = exercise.sets.length;
+      }
+    });
+    
+    // Save changes
+    if (onSave) {
+      onSave(updatedSession);
+    }
+    
+    Alert.alert('Success', 'All sets marked as completed!');
+  };
+  
+  // SIDE EFFECTS
+  
   useEffect(() => {
     return () => {
       if (timerInterval.current) {
@@ -84,169 +395,16 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
 
   // Ensure exercisesList exists and is an array
   const exercisesList = Array.isArray(session.exercisesList) ? session.exercisesList : [];
-  console.log("Exercises list:", exercisesList);
-  
-  // Handle saving the session
-  const handleSave = () => {
-    const updatedSession = {
-      ...session,
-      name: sessionName,
-      duration: timerSeconds, // Save timer value with the session
-    };
-    onSave(updatedSession);
-    Alert.alert('Success', 'Training session saved!');
-  };
-  
-  // Add a new set to an exercise
-  const addSet = (exerciseIndex) => {
-    if (!session || !Array.isArray(session.exercisesList)) {
-      console.error("Cannot add set: invalid session or exercisesList");
-      return;
-    }
-    
-    const exercise = session.exercisesList[exerciseIndex];
-    if (!exercise) {
-      console.error("Exercise not found at index:", exerciseIndex);
-      return;
-    }
-    
-    // Ensure sets array exists
-    if (!Array.isArray(exercise.sets)) {
-      exercise.sets = [];
-    }
-    
-    // Get values from the last set or use defaults
-    const lastSet = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1] : null;
-    const defaultWeight = lastSet ? lastSet.weight : 0;
-    const defaultReps = lastSet ? lastSet.reps : 8;
-    
-    // Add a new set
-    exercise.sets.push({
-      weight: defaultWeight,
-      reps: defaultReps
-    });
-    
-    // Force re-render and save changes
-    if (onSave) {
-      onSave({ ...session });
-    }
-  };
-  
-  // Open the edit set modal
-  const openEditSetModal = (exerciseIndex, setIndex) => {
-    const exercise = session.exercisesList[exerciseIndex];
-    const set = exercise.sets[setIndex];
-    
-    setEditingExerciseIndex(exerciseIndex);
-    setEditingSetIndex(setIndex);
-    setEditWeight(set.weight.toString());
-    setEditReps(set.reps.toString());
-    setModalVisible(true);
-  };
-  
-  // Save the edited set
-  const saveEditedSet = () => {
-    if (editingExerciseIndex === null || editingSetIndex === null) {
-      return;
-    }
-    
-    const exercise = session.exercisesList[editingExerciseIndex];
-    
-    // Update the set with new values
-    exercise.sets[editingSetIndex] = {
-      weight: parseFloat(editWeight) || 0,
-      reps: parseInt(editReps, 10) || 0
-    };
-    
-    // Close modal and reset state
-    setModalVisible(false);
-    setEditingExerciseIndex(null);
-    setEditingSetIndex(null);
-    
-    // Save changes
-    if (onSave) {
-      onSave({ ...session });
-    }
-  };
-  
-  // Delete a set
-  const deleteSet = (exerciseIndex, setIndex) => {
-    const exercise = session.exercisesList[exerciseIndex];
-    
-    // Remove the set
-    exercise.sets.splice(setIndex, 1);
-    
-    // If completedSets is greater than the number of sets, adjust it
-    if ((exercise.completedSets || 0) > exercise.sets.length) {
-      exercise.completedSets = exercise.sets.length;
-    }
-    
-    // Save changes
-    if (onSave) {
-      onSave({ ...session });
-    }
-  };
-  
-  // Calculate completion percentage safely
-  const calculateCompletion = () => {
-    if (!Array.isArray(exercisesList) || exercisesList.length === 0) {
-      return 0;
-    }
-    
-    let totalSets = 0;
-    let completedSets = 0;
-    
-    exercisesList.forEach(exercise => {
-      if (Array.isArray(exercise.sets)) {
-        totalSets += exercise.sets.length;
-        completedSets += exercise.completedSets || 0;
-      }
-    });
-    
-    return totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
-  };
   
   // Get completion percentage
-  const completionPercentage = calculateCompletion();
+  const completionPercentage = calculateCompletionCB();
   
-  // Toggle set completion
-  const toggleSetCompletion = (exerciseIndex, setIndex) => {
-    if (!session || !Array.isArray(session.exercisesList)) {
-      console.error("Cannot toggle set: invalid session or exercisesList");
-      return;
-    }
-    
-    const exercise = session.exercisesList[exerciseIndex];
-    if (!exercise) {
-      console.error("Exercise not found at index:", exerciseIndex);
-      return;
-    }
-    
-    // Calculate new completedSets count
-    let updatedCompletedSets = exercise.completedSets || 0;
-    
-    // Check if this set is already completed
-    const setCompleted = (updatedCompletedSets > setIndex);
-    
-    if (setCompleted) {
-      // Uncomplete this set and all sets after it
-      updatedCompletedSets = setIndex;
-    } else {
-      // Complete this set
-      updatedCompletedSets = setIndex + 1;
-    }
-    
-    // Update the exercise
-    exercise.completedSets = updatedCompletedSets;
-    
-    // Force re-render
-    if (onSave) {
-      onSave({ ...session });
-    }
-  };
+  // Check if workout has been started (any sets completed)
+  const workoutStarted = hasAnyCompletedSetsCB();
   
   return (
     <View style={styles.container}>
+      {/* Component render remains largely unchanged */}
       {error && <Text style={styles.errorText}>{error}</Text>}
       
       <View style={styles.header}>
@@ -256,30 +414,30 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
           onChangeText={setSessionName}
           placeholder="Session Name"
         />
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSaveACB}>
           <Text style={styles.saveButtonText}>Save</Text>
         </TouchableOpacity>
       </View>
       
       {/* Timer Section */}
       <View style={styles.timerContainer}>
-        <Text style={styles.timerDisplay}>{formatTime(timerSeconds)}</Text>
+        <Text style={styles.timerDisplay}>{formatTimeCB(timerSeconds)}</Text>
         <View style={styles.timerControls}>
           {timerRunning ? (
-            <TouchableOpacity style={styles.timerButton} onPress={pauseTimer}>
+            <TouchableOpacity style={styles.timerButton} onPress={pauseTimerACB}>
               <Text style={styles.timerButtonText}>Pause</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity 
               style={[styles.timerButton, styles.timerStartButton]} 
-              onPress={startTimer}
+              onPress={startTimerACB}
             >
               <Text style={styles.timerButtonText}>
                 {timerSeconds > 0 ? 'Resume' : 'Start'}
               </Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.timerButton} onPress={resetTimer}>
+          <TouchableOpacity style={styles.timerButton} onPress={resetTimerACB}>
             <Text style={styles.timerButtonText}>Reset</Text>
           </TouchableOpacity>
         </View>
@@ -294,7 +452,19 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
             ]} 
           />
         </View>
-        <Text style={styles.progressText}>{completionPercentage}% complete</Text>
+        <View style={styles.progressRow}>
+          <Text style={styles.progressText}>{completionPercentage}% complete</Text>
+          
+          {/* Mark as 100% Complete button */}
+          {workoutStarted && completionPercentage < 100 && (
+            <TouchableOpacity 
+              style={styles.markCompleteButton}
+              onPress={markWorkoutCompleteACB}
+            >
+              <Text style={styles.markCompleteButtonText}>Mark 100% Complete</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
       
       <ScrollView style={styles.exercisesContainer}>
@@ -304,78 +474,31 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
             <Text style={styles.emptyStateSubText}>Tap the button below to add exercises</Text>
           </View>
         ) : (
-          exercisesList.map((exercise, exerciseIndex) => (
-            <View key={exercise.id || exerciseIndex} style={styles.exerciseCard}>
-              <Text style={styles.exerciseName}>{exercise.name || 'Unnamed Exercise'}</Text>
-              
-              {Array.isArray(exercise.targetMuscles) && exercise.targetMuscles.length > 0 && (
-                <View style={styles.targetMuscleContainer}>
-                  <Text style={styles.targetMuscleLabel}>Target: </Text>
-                  <Text style={styles.targetMuscleValue}>{exercise.targetMuscles.join(', ')}</Text>
-                </View>
-              )}
-              
-              <View style={styles.setsContainer}>
-                <View style={styles.setsHeaderRow}>
-                  <Text style={styles.setsHeader}>Sets:</Text>
-                  <TouchableOpacity 
-                    style={styles.addSetButton}
-                    onPress={() => addSet(exerciseIndex)}
-                  >
-                    <Text style={styles.addSetButtonText}>+ Add Set</Text>
-                  </TouchableOpacity>
-                </View>
-                
-                {Array.isArray(exercise.sets) && exercise.sets.length > 0 ? (
-                  exercise.sets.map((set, setIndex) => (
-                    <View key={setIndex} style={styles.setItemContainer}>
-                      <TouchableOpacity
-                        style={[
-                          styles.setItem,
-                          (exercise.completedSets || 0) > setIndex && styles.completedSetItem
-                        ]}
-                        onPress={() => toggleSetCompletion(exerciseIndex, setIndex)}
-                      >
-                        <Text style={styles.setNumber}>Set {setIndex + 1}</Text>
-                        <Text style={styles.setDetails}>
-                          {set.weight > 0 ? `${set.weight} kg × ` : ''}{set.reps} reps
-                        </Text>
-                      </TouchableOpacity>
-                      
-                      <View style={styles.setActions}>
-                        <TouchableOpacity 
-                          style={styles.setActionButton}
-                          onPress={() => openEditSetModal(exerciseIndex, setIndex)}
-                        >
-                          <Text style={styles.setActionButtonText}>Edit</Text>
-                        </TouchableOpacity>
-                        
-                        {exercise.sets.length > 1 && (
-                          <TouchableOpacity 
-                            style={[styles.setActionButton, styles.deleteButton]}
-                            onPress={() => deleteSet(exerciseIndex, setIndex)}
-                          >
-                            <Text style={styles.deleteButtonText}>Delete</Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.noSetsText}>No sets defined</Text>
-                )}
-              </View>
-            </View>
-          ))
+          exercisesList.map((exercise, exerciseIndex) => 
+            exerciseToComponentCB(exercise, exerciseIndex)
+          )
         )}
       </ScrollView>
       
-      <TouchableOpacity 
-        style={styles.addButton} 
-        onPress={onAddExercise}
-      >
-        <Text style={styles.addButtonText}>Add Exercise</Text>
-      </TouchableOpacity>
+      {/* Bottom buttons */}
+      <View style={styles.bottomButtonsContainer}>
+        <TouchableOpacity 
+          style={styles.addButton} 
+          onPress={onAddExercise}
+        >
+          <Text style={styles.addButtonText}>Add Exercise</Text>
+        </TouchableOpacity>
+        
+        {/* Finish workout button (only shown once workout has started) */}
+        {workoutStarted && (
+          <TouchableOpacity 
+            style={styles.finishButton} 
+            onPress={finishWorkoutACB}
+          >
+            <Text style={styles.finishButtonText}>Finish Workout</Text>
+          </TouchableOpacity>
+        )}
+      </View>
       
       {/* Edit Set Modal */}
       <Modal
@@ -420,7 +543,7 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
               
               <TouchableOpacity 
                 style={[styles.modalButton, styles.saveModalButton]}
-                onPress={saveEditedSet}
+                onPress={saveEditedSetACB}
               >
                 <Text style={styles.saveModalButtonText}>Save</Text>
               </TouchableOpacity>
@@ -515,10 +638,24 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#6C63FF',
   },
+  progressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   progressText: {
     fontSize: 14,
     color: '#666',
-    textAlign: 'right',
+  },
+  markCompleteButton: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  markCompleteButtonText: {
+    fontSize: 12,
+    color: '#555',
   },
   exercisesContainer: {
     flex: 1,
@@ -641,14 +778,29 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 4,
   },
+  // Bottom Buttons
+  bottomButtonsContainer: {
+    marginTop: 16,
+  },
   addButton: {
     backgroundColor: '#6C63FF',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 16,
+    marginBottom: 10,
   },
   addButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  finishButton: {
+    backgroundColor: '#FF6B6B',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  finishButtonText: {
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,

@@ -15,19 +15,22 @@ import { searchExercises } from "../dishSource";
 import { muscleNameOptions, equipmentNameOptions, bodyPartNameOptions } from '../apiParams';
 
 export function ExercisesView(props) {
-  const { onExerciseSelected } = props; // Extract the onExerciseSelected callback
+  const { onExerciseSelected } = props;
   
+  // Options for filter chips
   const muscleOptions = ['All', ...muscleNameOptions];
   const equipmentOptions = ['All', ...equipmentNameOptions];
   const bodyPartOptions = ['All', ...bodyPartNameOptions];
 
-  // State - changed to arrays for multi-select
+  // State for exercises and filters
   const [allExercises, setAllExercises] = useState([]);
   const [filteredExercises, setFilteredExercises] = useState([]);
   const [selectedMuscles, setSelectedMuscles] = useState(['All']);
   const [selectedEquipments, setSelectedEquipments] = useState(['All']);
   const [selectedBodyParts, setSelectedBodyParts] = useState(['All']);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Loading and API state
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -37,12 +40,203 @@ export function ExercisesView(props) {
   const [fetchingProgress, setFetchingProgress] = useState(0);
   const [fetchComplete, setFetchComplete] = useState(false);
 
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  // SYNCHRONOUS CALLBACKS
+  
+  // Transform an exercise object into a component (synchronous callback)
+  function exerciseToComponentCB(item) {
+    return (
+      <TouchableOpacity 
+        style={styles.exerciseCard}
+        onPress={() => handleExerciseSelectACB(item)}
+        key={item.exerciseId}
+      >
+        <View style={styles.cardHeader}>
+          <Text style={styles.exerciseName}>{item.name}</Text>
+          <View style={styles.targetMuscleBadge}>
+            <Text style={styles.targetMuscleText}>
+              {item.targetMuscles && item.targetMuscles.length > 0 ? item.targetMuscles[0] : 'N/A'}
+            </Text>
+          </View>
+        </View>
+        
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Body Part:</Text>
+            <Text style={styles.detailValue}>{item.bodyParts ? item.bodyParts.join(', ') : 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Equipment:</Text>
+            <Text style={styles.detailValue}>{item.equipments ? item.equipments.join(', ') : 'N/A'}</Text>
+          </View>
+          
+          {item.secondaryMuscles && item.secondaryMuscles.length > 0 && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Also works:</Text>
+              <Text style={styles.detailValue}>{item.secondaryMuscles.join(', ')}</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
   }
 
-  // Fetch first page of exercises
-  const fetchInitialExercises = async (isRefresh = false) => {
+  // Transform a filter option into a component (synchronous callback)
+  function filterOptionToComponentCB(label, isSelected, onToggle) {
+    return (
+      <TouchableOpacity
+        style={[
+          styles.filterChip,
+          isSelected && styles.selectedFilterChip,
+          isSelected && label === 'All' && styles.allSelectedChip
+        ]}
+        onPress={() => onToggle(label)}
+        key={label}
+      >
+        <Text style={[
+          styles.filterChipText,
+          isSelected && styles.selectedFilterChipText
+        ]}>
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
+  // Filter function - returns new filtered array (synchronous)
+  function applyFiltersCB() {
+    let result = [...allExercises];
+    
+    // Helper function to filter by property (higher-order function)
+    function filterByPropertyCB(items, selectedValues, propertyGetter) {
+      if (selectedValues.includes('All')) {
+        return items;
+      }
+      
+      return items.filter(item => 
+        selectedValues.some(value => {
+          const properties = propertyGetter(item);
+          return Array.isArray(properties) && properties.includes(value);
+        })
+      );
+    }
+    
+    // Apply muscle filter
+    result = filterByPropertyCB(
+      result,
+      selectedMuscles,
+      (exercise) => [
+        ...(exercise?.targetMuscles || []),
+        ...(exercise?.secondaryMuscles || [])
+      ]
+    );
+    
+    // Apply equipment filter
+    result = filterByPropertyCB(
+      result,
+      selectedEquipments,
+      (exercise) => exercise?.equipments || []
+    );
+    
+    // Apply body part filter
+    result = filterByPropertyCB(
+      result,
+      selectedBodyParts,
+      (exercise) => exercise?.bodyParts || []
+    );
+    
+    // Apply text search
+    if (searchQuery) {
+      const lowercaseQuery = searchQuery.toLowerCase();
+      result = result.filter(exercise =>
+        (exercise?.name || '').toLowerCase().includes(lowercaseQuery)
+      );
+    }
+    
+    return result;
+  }
+
+  // Update filtered exercises when filters change (side effect)
+  useEffect(() => {
+    const filtered = applyFiltersCB();
+    setFilteredExercises(filtered);
+  }, [selectedMuscles, selectedEquipments, selectedBodyParts, searchQuery, allExercises]);
+
+  // ASYNCHRONOUS CALLBACKS
+
+  // Handle exercise selection (asynchronous callback)
+  const handleExerciseSelectACB = (exercise) => {
+    console.log('Exercise selected:', exercise.name);
+    if (onExerciseSelected) {
+      onExerciseSelected(exercise);
+    }
+  };
+
+  // Toggle muscle filter selection (asynchronous callback)
+  const toggleMuscleSelectionACB = (muscle) => {
+    if (muscle === 'All') {
+      setSelectedMuscles(['All']);
+    } else {
+      setSelectedMuscles(prev => {
+        // Remove 'All' if it exists
+        const newSelection = prev.includes('All') ? [] : [...prev];
+        
+        // Toggle the selection
+        if (newSelection.includes(muscle)) {
+          const filtered = newSelection.filter(m => m !== muscle);
+          // If empty after removal, select 'All'
+          return filtered.length === 0 ? ['All'] : filtered;
+        } else {
+          return [...newSelection, muscle];
+        }
+      });
+    }
+  };
+
+  // Toggle equipment filter selection (asynchronous callback)
+  const toggleEquipmentSelectionACB = (equipment) => {
+    if (equipment === 'All') {
+      setSelectedEquipments(['All']);
+    } else {
+      setSelectedEquipments(prev => {
+        const newSelection = prev.includes('All') ? [] : [...prev];
+        if (newSelection.includes(equipment)) {
+          const filtered = newSelection.filter(e => e !== equipment);
+          return filtered.length === 0 ? ['All'] : filtered;
+        } else {
+          return [...newSelection, equipment];
+        }
+      });
+    }
+  };
+
+  // Toggle body part filter selection (asynchronous callback)
+  const toggleBodyPartSelectionACB = (bodyPart) => {
+    if (bodyPart === 'All') {
+      setSelectedBodyParts(['All']);
+    } else {
+      setSelectedBodyParts(prev => {
+        const newSelection = prev.includes('All') ? [] : [...prev];
+        if (newSelection.includes(bodyPart)) {
+          const filtered = newSelection.filter(b => b !== bodyPart);
+          return filtered.length === 0 ? ['All'] : filtered;
+        } else {
+          return [...newSelection, bodyPart];
+        }
+      });
+    }
+  };
+
+  // Reset all filters (asynchronous callback)
+  const resetFiltersACB = () => {
+    setSelectedMuscles(['All']);
+    setSelectedEquipments(['All']);
+    setSelectedBodyParts(['All']);
+    setSearchQuery('');
+  };
+
+  // Fetch first page of exercises (asynchronous callback with promise)
+  const fetchInitialExercisesACB = async (isRefresh = false) => {
     try {
       if (isRefresh) {
         setIsRefreshing(true);
@@ -58,24 +252,19 @@ export function ExercisesView(props) {
       const response = await searchExercises({});
       
       const exercises = response.data.exercises || [];
-      
-      // Make sure totalExercises is set correctly from response
-      // If totalExercises is missing or zero, use the length of current exercises as fallback
       const total = response.data.totalExercises || exercises.length || 0;
       
       setTotalExercises(total);
       setNextPageUrl(response.data.nextPage);
       setAllExercises(exercises);
-      setFilteredExercises(exercises);
       setFetchingProgress(exercises.length);
 
-      // Only fetch remaining pages if there's a next page AND total is greater than current count
+      // Only fetch remaining pages if needed
       if (response.data.nextPage && total > exercises.length) {
         console.log('Starting to fetch remaining exercises...');
-        await fetchRemainingExercises(response.data.nextPage, exercises, total);
+        await fetchRemainingExercisesACB(response.data.nextPage, exercises, total);
       } else {
         console.log('No additional pages to fetch or total equals current count');
-        // No more pages to fetch
         setFetchComplete(true);
         setIsLoading(false);
         setIsRefreshing(false);
@@ -90,8 +279,8 @@ export function ExercisesView(props) {
     }
   };
 
-  // Fetch remaining pages - using a non-recursive approach to avoid stack overflow
-  const fetchRemainingExercises = async (initialUrl, initialExercises, totalCount) => {
+  // Fetch remaining pages (asynchronous callback with promise)
+  const fetchRemainingExercisesACB = async (initialUrl, initialExercises, totalCount) => {
     if (!initialUrl) {
       setFetchComplete(true);
       setIsLoading(false);
@@ -108,7 +297,6 @@ export function ExercisesView(props) {
     try {
       // Loop instead of recursion to avoid stack issues
       while (currentUrl && accumulatedExercises.length < totalCount) {
-        // Extract the API parameters from the URL
         const urlObj = new URL(currentUrl);
         const offset = urlObj.searchParams.get('offset');
         const limit = urlObj.searchParams.get('limit');
@@ -118,12 +306,11 @@ export function ExercisesView(props) {
         
         // Check if we got a valid response with exercises
         if (response?.data?.exercises?.length > 0) {
-          // Combine new exercises with existing ones
+          // Combine new exercises with existing ones (create new array)
           accumulatedExercises = [...accumulatedExercises, ...response.data.exercises];
           
           // Update state with the latest accumulated exercises
           setAllExercises(accumulatedExercises);
-          setFilteredExercises(accumulatedExercises);
           setFetchingProgress(accumulatedExercises.length);
           
           // Get next page URL
@@ -156,170 +343,19 @@ export function ExercisesView(props) {
     }
   };
 
-  // Initial fetch
+  // Initial fetch on component mount (side effect)
   useEffect(() => {
-    fetchInitialExercises();
+    fetchInitialExercisesACB();
   }, []);
 
-  // Toggle functions for multi-select
-  const toggleMuscleSelection = (muscle) => {
-    if (muscle === 'All') {
-      setSelectedMuscles(['All']);
-    } else {
-      setSelectedMuscles(prev => {
-        // Remove 'All' if it exists
-        const newSelection = prev.includes('All') ? [] : [...prev];
-        
-        // Toggle the selection
-        if (newSelection.includes(muscle)) {
-          return newSelection.filter(m => m !== muscle);
-        } else {
-          return [...newSelection, muscle];
-        }
-      });
-    }
-  };
-
-  const toggleEquipmentSelection = (equipment) => {
-    if (equipment === 'All') {
-      setSelectedEquipments(['All']);
-    } else {
-      setSelectedEquipments(prev => {
-        const newSelection = prev.includes('All') ? [] : [...prev];
-        if (newSelection.includes(equipment)) {
-          return newSelection.filter(e => e !== equipment);
-        } else {
-          return [...newSelection, equipment];
-        }
-      });
-    }
-  };
-
-  const toggleBodyPartSelection = (bodyPart) => {
-    if (bodyPart === 'All') {
-      setSelectedBodyParts(['All']);
-    } else {
-      setSelectedBodyParts(prev => {
-        const newSelection = prev.includes('All') ? [] : [...prev];
-        if (newSelection.includes(bodyPart)) {
-          return newSelection.filter(b => b !== bodyPart);
-        } else {
-          return [...newSelection, bodyPart];
-        }
-      });
-    }
-  };
-
-  // Handle exercise selection
-  const handleExerciseSelectACB = (exercise) => {
-    console.log('Exercise selected:', exercise.name);
-    if (onExerciseSelected) {
-      onExerciseSelected(exercise);
-    }
-  };
-
-  // Apply filters with multi-select support
-  useEffect(() => {
-    let result = [...allExercises];
-
-    // Muscle filter
-    if (!selectedMuscles.includes('All')) {
-      result = result.filter(exercise => 
-        selectedMuscles.some(muscle => 
-          exercise?.targetMuscles?.includes(muscle) ||
-          exercise?.secondaryMuscles?.includes(muscle)
-      ));
-    }
-
-    // Equipment filter
-    if (!selectedEquipments.includes('All')) {
-      result = result.filter(exercise => 
-        selectedEquipments.some(equipment => 
-          exercise?.equipments?.includes(equipment)
-      ));
-    }
-
-    // Body part filter
-    if (!selectedBodyParts.includes('All')) {
-      result = result.filter(exercise => 
-        selectedBodyParts.some(bodyPart => 
-          exercise?.bodyParts?.includes(bodyPart)
-      ));
-    }
-
-    // Search query filter
-    if (searchQuery) {
-      result = result.filter(exercise =>
-        exercise?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    setFilteredExercises(result);
-  }, [selectedMuscles, selectedEquipments, selectedBodyParts, searchQuery, allExercises]);
-
-  // Render exercise item with click handler
-  const renderExerciseItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.exerciseCard}
-      onPress={() => handleExerciseSelectACB(item)} // Add this onPress handler
-    >
-      <View style={styles.cardHeader}>
-        <Text style={styles.exerciseName}>{item.name}</Text>
-        <View style={styles.targetMuscleBadge}>
-          <Text style={styles.targetMuscleText}>
-            {item.targetMuscles && item.targetMuscles.length > 0 ? item.targetMuscles[0] : 'N/A'}
-          </Text>
-        </View>
-      </View>
-      
-      <View style={styles.detailsContainer}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Body Part:</Text>
-          <Text style={styles.detailValue}>{item.bodyParts ? item.bodyParts.join(', ') : 'N/A'}</Text>
-        </View>
-        
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Equipment:</Text>
-          <Text style={styles.detailValue}>{item.equipments ? item.equipments.join(', ') : 'N/A'}</Text>
-        </View>
-        
-        {item.secondaryMuscles && item.secondaryMuscles.length > 0 && (
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Also works:</Text>
-            <Text style={styles.detailValue}>{item.secondaryMuscles.join(', ')}</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-
-  // Enhanced filter chip renderer for multi-select
-  const renderFilterChip = ({ label, selected, onPress }) => (
-    <TouchableOpacity
-      style={[
-        styles.filterChip,
-        selected && styles.selectedFilterChip,
-        selected && label === 'All' && styles.allSelectedChip
-      ]}
-      onPress={onPress}
-      key={label}
-    >
-      <Text style={[
-        styles.filterChipText,
-        selected && styles.selectedFilterChipText
-      ]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-
+  // Render error view if there's an error
   if (error) {
     return (
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={() => fetchInitialExercises(true)}
+          onPress={() => fetchInitialExercisesACB(true)}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -327,8 +363,10 @@ export function ExercisesView(props) {
     );
   }
 
+  // Main component render
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Exercise Library</Text>
         <Text style={styles.exerciseCount}>
@@ -367,38 +405,54 @@ export function ExercisesView(props) {
       <View style={styles.filterContainer}>
         <Text style={styles.sectionTitle}>Filter Exercises</Text>
         
-        <Text style={styles.filterLabel}>By Muscle Group:</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-          {muscleOptions.map((muscle) => (
-            renderFilterChip({
-              label: muscle,
-              selected: selectedMuscles.includes(muscle),
-              onPress: () => toggleMuscleSelection(muscle)
-            })
-          ))}
-        </ScrollView>
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>By Muscle Group:</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={true} 
+            style={styles.filterScroll}
+            contentContainerStyle={styles.filterScrollContent}
+          >
+            {muscleOptions.map(muscle => 
+              filterOptionToComponentCB(muscle, selectedMuscles.includes(muscle), toggleMuscleSelectionACB)
+            )}
+          </ScrollView>
+        </View>
 
-        <Text style={styles.filterLabel}>By Equipment:</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-          {equipmentOptions.map((equipment) => (
-            renderFilterChip({
-              label: equipment,
-              selected: selectedEquipments.includes(equipment),
-              onPress: () => toggleEquipmentSelection(equipment)
-            })
-          ))}
-        </ScrollView>
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>By Equipment:</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={true} 
+            style={styles.filterScroll}
+            contentContainerStyle={styles.filterScrollContent}
+          >
+            {equipmentOptions.map(equipment => 
+              filterOptionToComponentCB(equipment, selectedEquipments.includes(equipment), toggleEquipmentSelectionACB)
+            )}
+          </ScrollView>
+        </View>
 
-        <Text style={styles.filterLabel}>By Body Part:</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-          {bodyPartOptions.map((bodyPart) => (
-            renderFilterChip({
-              label: bodyPart,
-              selected: selectedBodyParts.includes(bodyPart),
-              onPress: () => toggleBodyPartSelection(bodyPart)
-            })
-          ))}
-        </ScrollView>
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>By Body Part:</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={true} 
+            style={styles.filterScroll}
+            contentContainerStyle={styles.filterScrollContent}
+          >
+            {bodyPartOptions.map(bodyPart => 
+              filterOptionToComponentCB(bodyPart, selectedBodyParts.includes(bodyPart), toggleBodyPartSelectionACB)
+            )}
+          </ScrollView>
+        </View>
+        
+        <TouchableOpacity 
+          style={styles.resetButton}
+          onPress={resetFiltersACB}
+        >
+          <Text style={styles.resetButtonText}>Reset Filters</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Exercise List */}
@@ -410,29 +464,18 @@ export function ExercisesView(props) {
       ) : (
         <FlatList
           data={filteredExercises}
-          renderItem={renderExerciseItem}
+          renderItem={({ item }) => exerciseToComponentCB(item)}
           keyExtractor={(item) => item.exerciseId + Math.random()}
           contentContainerStyle={styles.exerciseList}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No exercises match your filters</Text>
-              <TouchableOpacity 
-                style={styles.resetButton}
-                onPress={() => {
-                  setSelectedMuscles(['All']);
-                  setSelectedEquipments(['All']);
-                  setSelectedBodyParts(['All']);
-                  setSearchQuery('');
-                }}
-              >
-                <Text style={styles.resetButtonText}>Reset Filters</Text>
-              </TouchableOpacity>
             </View>
           }
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
-              onRefresh={() => fetchInitialExercises(true)}
+              onRefresh={() => fetchInitialExercisesACB(true)}
               colors={['#6C63FF']}
             />
           }
@@ -440,9 +483,10 @@ export function ExercisesView(props) {
       )}
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  // Styles remain the same as previous implementation
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
@@ -511,14 +555,21 @@ const styles = StyleSheet.create({
     color: '#212529',
     marginBottom: 12,
   },
+  filterSection: {
+    marginBottom: 16,
+  },
   filterLabel: {
     fontSize: 14,
     color: '#495057',
     marginBottom: 8,
-    marginTop: 12,
+    fontWeight: '500',
   },
   filterScroll: {
-    marginHorizontal: -4,
+    maxHeight: 50,
+  },
+  filterScrollContent: {
+    paddingBottom: 8,
+    paddingRight: 16,
   },
   filterChip: {
     paddingHorizontal: 16,
@@ -526,7 +577,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#E9ECEF',
     marginRight: 8,
-    marginHorizontal: 4,
   },
   selectedFilterChip: {
     backgroundColor: '#6C63FF',
@@ -537,6 +587,21 @@ const styles = StyleSheet.create({
   },
   selectedFilterChipText: {
     color: 'white',
+  },
+  allSelectedChip: {
+    backgroundColor: '#4C9AFF',
+  },
+  resetButton: {
+    backgroundColor: '#6C63FF',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  resetButtonText: {
+    color: 'white',
+    fontWeight: '500',
+    fontSize: 14,
   },
   exerciseList: {
     padding: 16,
@@ -615,16 +680,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  resetButton: {
-    backgroundColor: '#6C63FF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  resetButtonText: {
-    color: 'white',
-    fontWeight: '500',
-  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -646,13 +701,5 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontWeight: '500',
-  },
-  allSelectedChip: {
-    backgroundColor: '#4C9AFF', // Different color for "All" when selected
-  },
-  selectedIndicator: {
-    color: 'white',
-    marginLeft: 4,
-    fontWeight: 'bold',
-  },
+  }
 });
