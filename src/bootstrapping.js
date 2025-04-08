@@ -1,89 +1,119 @@
 import "./teacherFetch"
-
 import { configure, observable, reaction } from "mobx"
-
 import { model } from "./DinnerModel"
-//——————————————————————————————————————————————————————————————————————————————
-import { dishesConst } from "./dishesConst"
 import { connectToPersistence } from "./firestoreModel"
 
 configure({ enforceActions: "never" })
 
-// export const reactiveModel = "TODO make a reactive model here";
+// Make the model reactive with all properties observable
 export const reactiveModel = observable(model)
 
 connectToPersistence(reactiveModel, reaction);
 
-function checkCurrentDishIdACB() {
-    return reactiveModel.currentDishId
+// Set up reaction to handle the exercise data when it loads
+function checkExerciseDataACB() {
+    return reactiveModel.currentExercisePromiseState.data
 }
 
-async function sideEffectCurrentDishIdACB() {
-    await reactiveModel.currentDishEffect()
+function processExerciseDataACB() {
+    reactiveModel.exercisesLoadedEffect()
 }
 
-reaction(checkCurrentDishIdACB, sideEffectCurrentDishIdACB)
+reaction(checkExerciseDataACB, processExerciseDataACB)
 
-// Perform an initial search with an empty object
-async function initialSearch() {
-    await reactiveModel.doSearch({});
+// Initialize the model with sample training sessions
+function initializeTrainingSessionsACB() {
+    const sampleSessions = [
+        {
+            id: 1,
+            name: "Chest Workout Session",
+            exercisesList: [
+                {
+                    id: 1,
+                    name: "Bench Press",
+                    sets: [
+                        { weight: 60, reps: 10 },
+                        { weight: 70, reps: 8 },
+                        { weight: 80, reps: 6 }
+                    ],
+                    completedSets: 0,
+                    targetMuscles: ["Chest"],
+                    bodyParts: ["Chest"],
+                    equipments: ["Barbell"]
+                }, 
+                {
+                    id: 2,
+                    name: "Push-ups",
+                    sets: [
+                        { weight: 0, reps: 15 },
+                        { weight: 0, reps: 12 },
+                        { weight: 0, reps: 10 }
+                    ],
+                    completedSets: 0,
+                    targetMuscles: ["Chest"],
+                    bodyParts: ["Chest"],
+                    equipments: ["Body weight"]
+                }
+            ]
+        },
+        {
+            id: 2,
+            name: "Leg Workout Session",
+            exercisesList: [
+                {
+                    id: 3,
+                    name: "Squats",
+                    sets: [
+                        { weight: 70, reps: 10 },
+                        { weight: 80, reps: 8 },
+                        { weight: 90, reps: 6 }
+                    ],
+                    completedSets: 0,
+                    targetMuscles: ["Quadriceps"],
+                    bodyParts: ["Legs"],
+                    equipments: ["Barbell"]
+                }, 
+                {
+                    id: 4,
+                    name: "Lunges",
+                    sets: [
+                        { weight: 0, reps: 15 },
+                        { weight: 0, reps: 12 },
+                        { weight: 0, reps: 10 }
+                    ],
+                    completedSets: 0,
+                    targetMuscles: ["Quadriceps"],
+                    bodyParts: ["Legs"],
+                    equipments: ["Body weight"]
+                }
+            ]
+        }
+    ]
+
+    // Add sample sessions to the model
+    sampleSessions.forEach(session => {
+        reactiveModel.addTrainingSession(session)
+    })
 }
 
-// Run the initial search
-initialSearch();
+// Run the initialization
+initializeTrainingSessionsACB()
 
-// make the model and a few example dishes available in the browser Console for testing
+// Safely load exercises with error handling
+function safelyLoadExercises() {
+    try {
+        reactiveModel.loadExercises()
+    } catch (error) {
+        console.error("Exception during loadExercises:", error)
+    }
+}
+
+// Perform an initial load of exercises
+safelyLoadExercises()
+
+// Update the currentView in model when URL changes (optional)
+// You can add navigation events here if needed
+
+// Make the model available globally for testing and debugging
 global.myModel = reactiveModel
-global.dishesConst = dishesConst
-
-
-global.trainingSessions = [
-    {
-        id: 1,
-        name: "Chest Workout Session",
-        exercisesList: [
-            {
-                id: 1,
-                name: "Bench Press",
-                sets: [
-                    { weight: 60, reps: 10 },
-                    { weight: 70, reps: 8 },
-                    { weight: 80, reps: 6 }
-                ]
-            }, 
-            {
-                id: 2,
-                name: "Push-ups",
-                sets: [
-                    { weight: 0, reps: 15 },
-                    { weight: 0, reps: 12 },
-                    { weight: 0, reps: 10 }
-                ]
-            }
-        ]
-    },
-    {
-        id: 2,
-        name: "Leg Workout Session",
-        exercisesList: [
-            {
-                id: 3,
-                name: "Squats",
-                sets: [
-                    { weight: 70, reps: 10 },
-                    { weight: 80, reps: 8 },
-                    { weight: 90, reps: 6 }
-                ]
-            }, 
-            {
-                id: 4,
-                name: "Lunges",
-                sets: [
-                    { weight: 0, reps: 15 },
-                    { weight: 0, reps: 12 },
-                    { weight: 0, reps: 10 }
-                ]
-            }
-        ]
-    },
-]
+global.trainingSessions = reactiveModel.trainingSessions
