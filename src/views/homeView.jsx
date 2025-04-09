@@ -1,13 +1,19 @@
 // src/views/homeView.jsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Modal, TextInput } from 'react-native';
 
 export function HomeView(props) {
     const { 
       currentTrainingSessionID, 
       trainingSessions, 
       handleSessionPress,
-       handleAddNewSessionPress } 
+       handleAddNewSessionPress,
+       sessionNameModalVisible,
+       handleConfirmSessionName,
+       handleCancelSessionName,
+       newSessionName,
+       setNewSessionName,
+       } 
        = props;
 
     //For later use when we integrate with firebase
@@ -56,6 +62,42 @@ export function HomeView(props) {
 
     return (
         <View style={styles.container}>
+          <Modal
+            visible={sessionNameModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={()=>handleCancelSessionName()}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Enter Session Name</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={newSessionName}
+                onChangeText={setNewSessionName}
+                placeholder="Core Strength Session"
+                placeholderTextColor="#666"
+                autoFocus={true}
+                />
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                    style={[styles.modalConfirmButton, newSessionName.length === 0 && styles.modalConfirmButtonDisabled]}
+                    onPress={handleConfirmSessionName}
+                    disabled={newSessionName.length === 0 }
+                  >
+                    <Text style={styles.modalButtonText}>Confirm</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={handleCancelSessionName}
+                  >
+                    <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            </View>
+          </Modal>
+
             <Text style={styles.screenTitle}>HOME</Text>
             
             <FlatList
@@ -156,4 +198,58 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 20,
+    width: '60%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalConfirmButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  modalConfirmButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  modalCancelButton: {
+    backgroundColor: '#F16767',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  
 });

@@ -4,37 +4,35 @@ import { getUserSessions, addNewSession } from '../trainingSessionUtilities';
 import { FIREBASE_AUTH } from '../firestoreModel';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { HomeView } from '../views/homeView';
-
+import { Alert } from 'react-native';
 
 
 export const Home = observer(function HomeRender(props) {
     const { model } = props
     const navigation = useNavigation();
+    //For later use when we integrate with firebase
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
-    
-//     const [trainingSessions, setTrainingSessions] = useState(
-//         global.trainingSessions.map(session => ({
-//           ...session,
-//           id: session.id.toString(),
-//           exerciseCount: session.exercisesList.length
-//         }))
-//       );
+    //For the modal for new session name
+    const [newSessionName, setNewSessionName] = useState("");
+    const [sessionNameModalVisible, setSessionNameModalVisible] = useState(false);
+
+
     const sessionChosen = (sessionId) => {
         model.setCurrentTrainingSessionID(sessionId)
     }
-    const addNewSession = () => {
+    const addNewSession = (sessionName) => {
         // creating a sample empty session for prototyping
         const newId = Math.max(...global.trainingSessions.map(s => s.id), 0) + 1;
         const newSession = {
             id: newId.toString(),
-            name: `New training ${newId}`,
+            name: sessionName,
             exercisesList: [],
         };
         model.addTrainingSession(newSession);
         return newId;
     }
+    
 
     const handleSessionPressACB = (sessionId) => {
         sessionChosen(sessionId);
@@ -44,19 +42,55 @@ export const Home = observer(function HomeRender(props) {
       };
     
     const handleAddNewSessionPressACB = () => {
-        newSessionId = addNewSession();
+        setSessionNameModalVisible(true);
+    }
+    const handleConfirmSessionNameACB = () => {
+        // if(!newSessionName || newSessionName.trim() === "") {
+        //     Alert.alert("Invalid Session Name", "Please enter a valid session name");
+        // }
+        setSessionNameModalVisible(false);
+        const newSessionId = addNewSession(newSessionName);
         sessionChosen(newSessionId);
-        navigation.navigate('training', { 
-          currentTrainingSessionID:newSessionId 
+        navigation.navigate("training", {
+            currentTrainingSessionID: newSessionId
         });
-      };
+    }
+    const handleCancelSessionNameACB = () => {
+        setSessionNameModalVisible(false);
+    }
+        // For IOS
+        // Alert.prompt(
+        //     "New Training Session",
+        //     "Enter the name of the new training session",
+        //     [
+        //         {text: "Cancel", 
+        //         style: "cancel"},
+        //         {text: "Confirm", 
+        //         onPress: (sessionName) => {
+        //             if (!sessionName || sessionName.trim() === "") {
+        //                 Alert.alert("Invalid Session Name", "Please enter a valid session name");}
+        //             newSessionId = addNewSession(sessionName);
+        //             sessionChosen(newSessionId);
+        //             navigation.navigate('training', { 
+        //                 currentTrainingSessionID:newSessionId 
+        //             });
+        //         }},
+        //     ],
+        //     "plain-text", // Input type
+        //     "My New Training Session" //PlaceHolder
+        // )
+        
     return (
         <HomeView
             currentTrainingSessionID={model.currentTrainingSessionID}
             trainingSessions={model.trainingSessions}
+            sessionNameModalVisible={sessionNameModalVisible}
             handleSessionPress={handleSessionPressACB}
             handleAddNewSessionPress={handleAddNewSessionPressACB}
-            
+            handleConfirmSessionName={handleConfirmSessionNameACB}
+            handleCancelSessionName={handleCancelSessionNameACB}
+            setNewSessionName={setNewSessionName}
+            newSessionName={newSessionName}
         />
     )
 })
