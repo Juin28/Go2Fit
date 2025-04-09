@@ -12,7 +12,7 @@ import {
 import { router } from 'expo-router';
 import { Link } from 'expo-router';
 
-export function TrainingView({ session, onAddExercise, onSave, error }) {
+export function TrainingView({ session, onAddExercise, onSave, error, getCurrentSession }) {
   // Component State
   const [sessionName, setSessionName] = useState(session?.name || 'New Training Session');
   
@@ -28,7 +28,6 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
   const [editWeight, setEditWeight] = useState('0');
   const [editReps, setEditReps] = useState('0');
   
-  console.log("TrainingView rendered with session:", session);
   
   // SYNCHRONOUS CALLBACKS
   
@@ -143,10 +142,20 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
   function startTimerACB() {
     if (timerRunning) return;
     
+    console.log("Starting timer and saving session state");
+    
     setTimerRunning(true);
     timerInterval.current = setInterval(() => {
       setTimerSeconds(prevSeconds => prevSeconds + 1);
     }, 1000);
+    
+    // Save session state when timer starts
+    const updatedSession = {
+      ...session,
+      name: sessionName,
+      duration: timerSeconds,
+    };
+    onSave(updatedSession);
   }
   
   function pauseTimerACB() {
@@ -387,6 +396,33 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
   }
   
   // SIDE EFFECTS
+
+  useEffect(() => {
+    console.log("TrainingView mounted with session:", session?.id);
+    
+    // Only check for updated session if we have both a session and getCurrentSession
+    if (session?.id && getCurrentSession) {
+      console.log("Checking for latest session data");
+      
+      // Get fresh session data
+      const latestSession = getCurrentSession(session.id);
+      
+      // If we got a valid session back
+      if (latestSession && Array.isArray(latestSession.exercisesList)) {
+        const currentExercisesCount = Array.isArray(session.exercisesList) ? 
+                                     session.exercisesList.length : 0;
+        
+        console.log("Current exercises count:", currentExercisesCount);
+        console.log("Latest exercises count:", latestSession.exercisesList.length);
+        
+        // If the latest session has more exercises, update via onSave
+        if (latestSession.exercisesList.length > currentExercisesCount) {
+          console.log("Found newer session data with more exercises, updating");
+          onSave(latestSession);
+        }
+      }
+    }
+  }, []);
   
   // Cleanup timer on unmount
   useEffect(() => {
@@ -414,7 +450,6 @@ export function TrainingView({ session, onAddExercise, onSave, error }) {
 
   // Ensure exercisesList exists and is an array
   const exercisesList = Array.isArray(session.exercisesList) ? session.exercisesList : [];
-  console.log("Exercises list:", exercisesList);
   
   // Get completion percentage
   const completionPercentage = calculateCompletionCB();
