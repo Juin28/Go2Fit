@@ -29,6 +29,7 @@ export function ExercisesView(props) {
   const [selectedEquipments, setSelectedEquipments] = useState(['All']);
   const [selectedBodyParts, setSelectedBodyParts] = useState(['All']);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFilterSection, setShowFilterSection] = useState(true);
   
   // Loading and API state
   const [isLoading, setIsLoading] = useState(true);
@@ -229,6 +230,11 @@ export function ExercisesView(props) {
     setSearchQuery('');
   }
 
+  // Add toggle filter visibility function
+  function toggleFilterSectionACB() {
+    setShowFilterSection(prev => !prev);
+  }
+
   // Fetch first page of exercises (asynchronous callback with promise)
   async function fetchInitialExercisesACB(isRefresh = false) {
     try {
@@ -375,7 +381,7 @@ export function ExercisesView(props) {
         </Text>
       </View>
 
-      {/* Search Bar */}
+      {/* Search Bar and Filter Toggle Button */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -384,6 +390,14 @@ export function ExercisesView(props) {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
+        <TouchableOpacity 
+          style={styles.filterToggleButton}
+          onPress={toggleFilterSectionACB}
+        >
+          <Text style={styles.filterToggleText}>
+            {showFilterSection ? 'Hide Filters' : 'Show Filters'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Progress Bar when loading all exercises */}
@@ -401,59 +415,61 @@ export function ExercisesView(props) {
         </View>
       )}
 
-      {/* Filter Sections */}
-      <View style={styles.filterContainer}>
-        <Text style={styles.sectionTitle}>Filter Exercises</Text>
-        
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>By Muscle Group:</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={true} 
-            style={styles.filterScroll}
-            contentContainerStyle={styles.filterScrollContent}
-          >
-            {muscleOptions.map(muscle => 
-              filterOptionToComponentCB(muscle, selectedMuscles.includes(muscle), toggleMuscleSelectionACB)
-            )}
-          </ScrollView>
-        </View>
+      {/* Filter Sections - Only show if showFilterSection is true */}
+      {showFilterSection && (
+        <View style={styles.filterContainer}>
+          <Text style={styles.sectionTitle}>Filter Exercises</Text>
+          
+          <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>By Muscle Group:</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={true} 
+              style={styles.filterScroll}
+              contentContainerStyle={styles.filterScrollContent}
+            >
+              {muscleOptions.map(muscle => 
+                filterOptionToComponentCB(muscle, selectedMuscles.includes(muscle), toggleMuscleSelectionACB)
+              )}
+            </ScrollView>
+          </View>
 
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>By Equipment:</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={true} 
-            style={styles.filterScroll}
-            contentContainerStyle={styles.filterScrollContent}
-          >
-            {equipmentOptions.map(equipment => 
-              filterOptionToComponentCB(equipment, selectedEquipments.includes(equipment), toggleEquipmentSelectionACB)
-            )}
-          </ScrollView>
-        </View>
+          <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>By Equipment:</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={true} 
+              style={styles.filterScroll}
+              contentContainerStyle={styles.filterScrollContent}
+            >
+              {equipmentOptions.map(equipment => 
+                filterOptionToComponentCB(equipment, selectedEquipments.includes(equipment), toggleEquipmentSelectionACB)
+              )}
+            </ScrollView>
+          </View>
 
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>By Body Part:</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={true} 
-            style={styles.filterScroll}
-            contentContainerStyle={styles.filterScrollContent}
+          <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>By Body Part:</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={true} 
+              style={styles.filterScroll}
+              contentContainerStyle={styles.filterScrollContent}
+            >
+              {bodyPartOptions.map(bodyPart => 
+                filterOptionToComponentCB(bodyPart, selectedBodyParts.includes(bodyPart), toggleBodyPartSelectionACB)
+              )}
+            </ScrollView>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.resetButton}
+            onPress={resetFiltersACB}
           >
-            {bodyPartOptions.map(bodyPart => 
-              filterOptionToComponentCB(bodyPart, selectedBodyParts.includes(bodyPart), toggleBodyPartSelectionACB)
-            )}
-          </ScrollView>
+            <Text style={styles.resetButtonText}>Reset Filters</Text>
+          </TouchableOpacity>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.resetButton}
-          onPress={resetFiltersACB}
-        >
-          <Text style={styles.resetButtonText}>Reset Filters</Text>
-        </TouchableOpacity>
-      </View>
+      )}
 
       {/* Exercise List */}
       {isLoading && allExercises.length === 0 ? (
@@ -486,7 +502,6 @@ export function ExercisesView(props) {
 }
 
 const styles = StyleSheet.create({
-  // Styles remain the same as previous implementation
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
@@ -510,6 +525,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   searchInput: {
     height: 48,
@@ -518,6 +535,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#495057',
+    flex: 1,
+    marginRight: 10,
+  },
+  filterToggleButton: {
+    backgroundColor: '#6C63FF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  filterToggleText: {
+    color: 'white',
+    fontWeight: '500',
+    fontSize: 14,
   },
   progressContainer: {
     height: 24,
