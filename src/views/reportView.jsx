@@ -33,11 +33,20 @@ export function ReportView(props) {
     ],
   }
 
+
+
+const screenWidth = Dimensions.get("window").width
+const columnCount = chartData.labels.length
+const BAR_WIDTH = 60
+
+const chartWidth = 
+  columnCount < 6 ? screenWidth - 40 : columnCount * BAR_WIDTH
+
   const chartConfig = {
     backgroundGradientFrom: "#ffffff",
     backgroundGradientTo: "#ffffff",
     decimalPlaces: 0,
-    barPercentage: 0.5,
+    barPercentage: columnCount < 6 ? 1 : 0.6, 
     color: () => "#000",
     labelColor: () => "#000",
     propsForBackgroundLines: {
@@ -45,6 +54,7 @@ export function ReportView(props) {
       strokeWidth: 1,
     },
   }
+  
 
   return (
     <ScrollView style={styles.container}>
@@ -76,26 +86,52 @@ export function ReportView(props) {
             </Pressable>
           )
         })}
-      </View>
 
- 
+        
+      </View>
       <View style={styles.chartCard}>
+  {columnCount >= 6 ? (
+
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View style={{alignItems: "center", width: chartWidth }}>
         <BarChart
           data={chartData}
-          width={Math.max(width - 40, chartData.labels.length * 60)}
+          width={chartWidth}
           height={300}
           fromZero
           showValuesOnTopOfBars
-          withInnerLines={true}
-          withHorizontalLabels={true}
+          withInnerLines
+          withHorizontalLabels
           chartConfig={chartConfig}
           verticalLabelRotation={0}
-          withCustomBarColorFromData={true}
-          flatColor={true}
+          withCustomBarColorFromData
+          flatColor
           style={styles.chart}
         />
-        <Text style={styles.yAxisLabel}>Time/{"\n"}min</Text>
       </View>
+    </ScrollView>
+  ) : (
+
+    <BarChart
+      data={chartData}
+      width={screenWidth - 40}
+      height={300}
+      fromZero
+      showValuesOnTopOfBars
+      withInnerLines
+      withHorizontalLabels
+      chartConfig={chartConfig}
+      verticalLabelRotation={0}
+      withCustomBarColorFromData
+      flatColor
+      style={styles.chart}
+    />
+  )}
+  <Text style={styles.yAxisLabel}>Time/{"\n"}min</Text>
+</View>
+
+
+
 
 
       <View style={styles.todayCard}>
@@ -108,9 +144,10 @@ export function ReportView(props) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    paddingTop: 40,
+    flexGrow: 1,          
+    // justifyContent: 'space-between',
+    paddingBottom: 100000,       
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 28,
@@ -126,6 +163,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flex: 1,
+    marginTop:10,
     backgroundColor: "#f4f4f4",
     marginHorizontal: 5,
     paddingVertical: 12,
@@ -168,6 +206,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   chartCard: {
+    marginTop:5,
     marginHorizontal: 20,
     padding: 10,
     paddingBottom: 30,
@@ -187,7 +226,8 @@ const styles = StyleSheet.create({
     color: "#888",
   },
   todayCard: {
-    marginTop: 20,
+    marginTop: 40,
+    marginBottom: 20,
     marginHorizontal: 20,
     padding: 20,
     backgroundColor: "#f5f5f5",
