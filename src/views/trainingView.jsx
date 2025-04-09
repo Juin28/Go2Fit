@@ -112,8 +112,6 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
   
   // Transform set data to UI element
   function setToComponentCB(set, setIndex, exerciseIndex, exercise) {
-    // Make sure this TouchableOpacity is receiving the right onPress handler
-    // and that the disabled prop is correctly evaluated
     return (
       <View key={setIndex} style={styles.setItemContainer}>
         <TouchableOpacity
@@ -129,6 +127,25 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
             {set.weight > 0 ? `${set.weight} kg × ` : ''}{set.reps} reps
           </Text>
         </TouchableOpacity>
+        
+        {/* Edit and Delete buttons - only shown when workout has not started */}
+        {!workoutStarted && (
+          <View style={styles.setActions}>
+            <TouchableOpacity 
+              style={styles.setActionButton}
+              onPress={openEditSetModalACB(exerciseIndex, setIndex)}
+            >
+              <Text style={styles.setActionButtonText}>Edit</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.setActionButton, styles.deleteButton]}
+              onPress={deleteSetACB(exerciseIndex, setIndex)}
+            >
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   }
