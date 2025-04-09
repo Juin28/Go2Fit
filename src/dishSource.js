@@ -53,6 +53,17 @@ export function searchExercises(searchParams) {
     endpoint = `${BASE_URL}/equipments/${encodeURIComponent(searchParams.equipment)}/exercises`;
   } else if (searchParams.target) {
     endpoint = `${BASE_URL}/muscles/${encodeURIComponent(searchParams.target)}/exercises`;
+  } else if (searchParams.offset || searchParams.limit) {
+    // Handle pagination
+    const params = new URLSearchParams();
+    if (searchParams.offset) {
+      params.append("offset", searchParams.offset);
+    }
+    if (searchParams.limit) {
+      params.append("limit", searchParams.limit);
+    }
+    endpoint = `${BASE_URL}/exercises?${params.toString()}`;
+
   } else {
     // Default to all exercises if no specific parameter is provided
     endpoint = `${BASE_URL}/exercises`;
