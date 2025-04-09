@@ -1,171 +1,120 @@
-// import { StyleSheet, Text, View } from "react-native"
-// import { router } from "expo-router"
-
-// export function HomeView(props) {
-//   return (
-//     <View style={styles.outerContainer}>
-//       <Text style={styles.number}>Home Tab</Text>
-//     </View>
-//   )
-// }
-
-// const styles = StyleSheet.create({
-//   outerContainer: {
-//     padding: 16,
-//     margin: 50,
-//     borderRadius: 8,
-//     width: "90%",
-//     maxWidth: "90%",
-//     alignSelf: "center",
-//   },
-//   number: {
-//     fontSize: 24,
-//     fontWeight: "bold",
-//   },
-// })
-
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { setCurrentTrainingSessionID } from '../DinnerModel';
+// src/views/homeView.jsx
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Modal, TextInput } from 'react-native';
 
 export function HomeView(props) {
-  const { sessionChosen } = props;
-  const navigation = useNavigation();
-  
-  // Use the global trainingSessions model with simplified display
-  const [trainingSessions, setTrainingSessions] = useState(
-    global.trainingSessions.map(session => ({
-      ...session,
-      id: session.id.toString(),
-      exerciseCount: session.exercisesList.length
-    }))
-  );
+    const { 
+      currentTrainingSessionID, 
+      trainingSessions, 
+      handleSessionPress,
+       handleAddNewSessionPress,
+       sessionNameModalVisible,
+       handleConfirmSessionName,
+       handleCancelSessionName,
+       newSessionName,
+       setNewSessionName,
+       } 
+       = props;
 
-  // Handle updates when returning from TrainingView
-  useFocusEffect(
-    React.useCallback(() => {
-      const updateStateIfNeeded = () => {
-        // State is already managed globally, so we just need to sync
-        setTrainingSessions(
-          global.trainingSessions.map(session => ({
-            ...session,
-            id: session.id.toString(),
-            exerciseCount: session.exercisesList.length
-          }))
-        );
-      };
-      updateStateIfNeeded();
-    }, [])
-  );
+    //For later use when we integrate with firebase
+    // if (loading) {
+    //     return (
+    //         <View style={styles.container}>
+    //             <ActivityIndicator size="large" color="#007AFF" />
+    //         </View>
+    //     );
+    // }
 
-  // const handleSessionPress = (sessionId) => {
-  //   // model.setCurrentTrainingSessionID(sessionId);
-  //   sessionChosen(sessionId);
-  //   navigation.navigate('training', { 
-  //     session: trainingSessions.find(s => s.id === sessionId),
-  //     onSave: (updatedSession) => {
-  //       setTrainingSessions(prev => prev.map(s => 
-  //         s.id === updatedSession.id ? updatedSession : s
-  //       ));
-  //     }
-  //   });
-    // navigation.navigate('training', {
-    //   session: sessionData,
-    //   currentTrainingSessionID: sessionId // or null for new session
-    // });
-  // };
+    // if (error) {
+    //     return (
+    //         <View style={styles.container}>
+    //             <Text style={styles.error}>{error}</Text>
+    //         </View>
+    //     );
+    // }
 
-  // const handleAddNewSession = () => {
-  //   const newId = Math.max(...global.trainingSessions.map(s => s.id), 0) + 1;
-  //   const newSession = {
-  //     id: newId.toString(),
-  //     name: `New training ${newId}`,
-  //     exercisesList: [],
-  //     exerciseCount: 0,
-  //     isNew: true
-  //   };
-    
-  //   setTrainingSessions(prev => [...prev, newSession]);
-  //   navigation.navigate('training', { 
-  //     session: newSession,
-  //     onSave: (updatedSession) => {
-  //       setTrainingSessions(prev => prev.map(s => 
-  //         s.id === updatedSession.id ? {
-  //           ...updatedSession,
-  //           isNew: false
-  //         } : s
-  //       ));
-  //     }
-  //   });
-  // };
+    const renderSessionItem = ({ item }) => (
+        <TouchableOpacity 
+            style={styles.sessionItem}
+            onPress={() => handleSessionPress(item.id)}
+        >
+            <Text style={styles.sessionTitle}>{item.name}</Text>
+            <Text style={styles.exerciseCount}>
+                {item.exerciseCount} exercise{item.exerciseCount !== 1 ? 's' : ''}
+            </Text>
+            
+            <View style={styles.exercisesContainer}>
+                {item.exercisesList?.map((exercise, index) => (
+                    <View key={`${exercise.id}-${index}`} style={styles.exerciseRow}>
+                        <Text style={styles.exerciseName}>{exercise.name}</Text>
+                        {index < item.exercisesList.length - 1 && 
+                            <Text style={styles.dot}>•</Text>
+                        }
+                    </View>
+                ))}
+            </View>
+            
+            <View style={styles.badgeContainer}>
+                <Text style={styles.badge}>{item.name.split(' ')[0][0]}</Text>
+            </View>
+        </TouchableOpacity>
+    );
 
-  const handleSessionPress = (sessionId) => {
-    sessionChosen(sessionId);
-    navigation.navigate('training', { 
-      // session: trainingSessions.find(s => s.id === sessionId),
-      currentTrainingSessionID: sessionId
-    });
-  };
+    return (
+        <View style={styles.container}>
+          <Modal
+            visible={sessionNameModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={()=>handleCancelSessionName()}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Enter Session Name</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={newSessionName}
+                onChangeText={setNewSessionName}
+                placeholder="Core Strength Session"
+                placeholderTextColor="#666"
+                autoFocus={true}
+                />
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                    style={[styles.modalConfirmButton, newSessionName.length === 0 && styles.modalConfirmButtonDisabled]}
+                    onPress={handleConfirmSessionName}
+                    disabled={newSessionName.length === 0 }
+                  >
+                    <Text style={styles.modalButtonText}>Confirm</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={handleCancelSessionName}
+                  >
+                    <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            </View>
+          </Modal>
 
-  const handleAddNewSession = () => {
-    const newId = Math.max(...global.trainingSessions.map(s => s.id), 0) + 1;
-    const newSession = {
-      id: newId.toString(),
-      name: `New training ${newId}`,
-      exercisesList: [],
-      exerciseCount: 0,
-      isNew: true
-    };
-    
-    navigation.navigate('training', { 
-      // session: newSession,
-      currentTrainingSessionID: null // Mark as new session
-    });
-  };
-
-  const renderSessionItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.sessionItem}
-      onPress={() => handleSessionPress(item.id)}
-    >
-      <Text style={styles.sessionTitle}>{item.name}</Text>
-      <Text style={styles.exerciseCount}>{item.exerciseCount} exercise{item.exerciseCount !== 1 ? 's' : ''}</Text>
-      
-      <View style={styles.exercisesContainer}>
-        {item.exercisesList?.map((exercise, index) => (
-          <View key={`${exercise.id}-${index}`} style={styles.exerciseRow}>
-            <Text style={styles.exerciseName}>{exercise.name}</Text>
-            {index < item.exercisesList.length - 1 && <Text style={styles.dot}>•</Text>}
-          </View>
-        ))}
-      </View>
-      
-      <View style={styles.badgeContainer}>
-        <Text style={styles.badge}>{item.name.split(' ')[0][0]}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.screenTitle}>HOME</Text>
-      
-      <FlatList
-        data={trainingSessions}
-        renderItem={renderSessionItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContainer}
-      />
-      
-      <TouchableOpacity 
-        style={styles.addButton}
-        onPress={handleAddNewSession}
-      >
-        <Text style={styles.addButtonText}>+ NEW</Text>
-      </TouchableOpacity>
-    </View>
-  );
+            <Text style={styles.screenTitle}>HOME</Text>
+            
+            <FlatList
+                data={trainingSessions}
+                renderItem={renderSessionItem}
+                keyExtractor={item => item.id}
+                contentContainerStyle={styles.listContainer}
+            />
+            
+            <TouchableOpacity 
+                style={styles.addButton}
+                onPress={()=>handleAddNewSessionPress()}
+            >
+                <Text style={styles.addButtonText}>+ NEW</Text>
+            </TouchableOpacity>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -249,4 +198,58 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 20,
+    width: '60%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalConfirmButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  modalConfirmButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  modalCancelButton: {
+    backgroundColor: '#F16767',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  
 });
