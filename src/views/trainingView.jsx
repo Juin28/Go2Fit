@@ -112,6 +112,8 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
   
   // Transform set data to UI element
   function setToComponentCB(set, setIndex, exerciseIndex, exercise) {
+    // Make sure this TouchableOpacity is receiving the right onPress handler
+    // and that the disabled prop is correctly evaluated
     return (
       <View key={setIndex} style={styles.setItemContainer}>
         <TouchableOpacity
@@ -120,33 +122,13 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
             (exercise.completedSets || 0) > setIndex && styles.completedSetItem
           ]}
           onPress={toggleSetCompletionACB(exerciseIndex, setIndex)}
-          disabled={!workoutStarted} // Only allow toggling when workout has started
+          disabled={!workoutStarted} // Only disabled when workout is NOT started
         >
           <Text style={styles.setNumber}>Set {setIndex + 1}</Text>
           <Text style={styles.setDetails}>
             {set.weight > 0 ? `${set.weight} kg × ` : ''}{set.reps} reps
           </Text>
         </TouchableOpacity>
-        
-        <View style={styles.setActions}>
-          {!workoutStarted && (
-            <TouchableOpacity 
-              style={styles.setActionButton}
-              onPress={openEditSetModalACB(exerciseIndex, setIndex)}
-            >
-              <Text style={styles.setActionButtonText}>Edit</Text>
-            </TouchableOpacity>
-          )}
-          
-          {!workoutStarted && exercise.sets.length > 1 && (
-            <TouchableOpacity 
-              style={[styles.setActionButton, styles.deleteButton]}
-              onPress={deleteSetACB(exerciseIndex, setIndex)}
-            >
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableOpacity>
-          )}
-        </View>
       </View>
     );
   }
@@ -345,8 +327,18 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
   // Toggle set completion (curried function)
   function toggleSetCompletionACB(exerciseIndex, setIndex) {
     return function() {
-      if (!session || !Array.isArray(session.exercisesList) || !workoutStarted) {
-        console.error("Cannot toggle set: invalid session, exercisesList, or workout not started");
+      console.log("Toggle set completion called for exercise", exerciseIndex, "set", setIndex);
+      console.log("Workout started?", workoutStarted);
+      
+      if (!session || !Array.isArray(session.exercisesList)) {
+        console.error("Cannot toggle set: invalid session or exercisesList");
+        return;
+      }
+      
+      if (!workoutStarted) {
+        console.log("Cannot toggle: workout not started");
+        // Maybe we should start the workout here automatically?
+        startWorkoutACB();
         return;
       }
       
@@ -365,6 +357,9 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
       // Check if this set is already completed
       const setCompleted = (updatedCompletedSets > setIndex);
       
+      console.log("Set already completed?", setCompleted);
+      console.log("Current completedSets:", updatedCompletedSets);
+      
       if (setCompleted) {
         // Uncomplete this set and all sets after it
         updatedCompletedSets = setIndex;
@@ -373,11 +368,14 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         updatedCompletedSets = setIndex + 1;
       }
       
+      console.log("New completedSets:", updatedCompletedSets);
+      
       // Update the exercise
       exercise.completedSets = updatedCompletedSets;
       
       // Save changes
       if (onSave) {
+        console.log("Saving updated session");
         onSave(updatedSession);
       }
     };
@@ -539,7 +537,7 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
       );
     }
   }, [completionPercentage, workoutStarted]);
-  
+
   // Check if we have a valid session
   if (!session) {
     return (
