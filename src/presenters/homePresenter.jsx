@@ -21,6 +21,7 @@ export const Home = observer(function HomeRender(props) {
     const sessionChosen = (sessionId) => {
         model.setCurrentTrainingSessionID(sessionId)
     }
+    
     const addNewSession = (sessionName) => {
         // creating a sample empty session for prototyping
         const newId = Math.max(...global.trainingSessions.map(s => s.id), 0) + 1;
@@ -39,11 +40,12 @@ export const Home = observer(function HomeRender(props) {
         navigation.navigate('training', { 
           currentTrainingSessionID: sessionId //doesnt matter pass or not cuz the model data is already updated
         });
-      };
+    };
     
     const handleAddNewSessionPressACB = () => {
         setSessionNameModalVisible(true);
     }
+    
     const handleConfirmSessionNameACB = () => {
         // if(!newSessionName || newSessionName.trim() === "") {
         //     Alert.alert("Invalid Session Name", "Please enter a valid session name");
@@ -55,48 +57,11 @@ export const Home = observer(function HomeRender(props) {
             currentTrainingSessionID: newSessionId
         });
     }
+    
     const handleCancelSessionNameACB = () => {
         setSessionNameModalVisible(false);
     }
-        // For IOS
-        // Alert.prompt(
-        //     "New Training Session",
-        //     "Enter the name of the new training session",
-        //     [
-        //         {text: "Cancel", 
-        //         style: "cancel"},
-        //         {text: "Confirm", 
-        //         onPress: (sessionName) => {
-        //             if (!sessionName || sessionName.trim() === "") {
-        //                 Alert.alert("Invalid Session Name", "Please enter a valid session name");}
-        //             newSessionId = addNewSession(sessionName);
-        //             sessionChosen(newSessionId);
-        //             navigation.navigate('training', { 
-        //                 currentTrainingSessionID:newSessionId 
-        //             });
-        //         }},
-        //     ],
-        //     "plain-text", // Input type
-        //     "My New Training Session" //PlaceHolder
-        // )
-        
-    return (
-        <HomeView
-            currentTrainingSessionID={model.currentTrainingSessionID}
-            trainingSessions={model.trainingSessions}
-            sessionNameModalVisible={sessionNameModalVisible}
-            handleSessionPress={handleSessionPressACB}
-            handleAddNewSessionPress={handleAddNewSessionPressACB}
-            handleConfirmSessionName={handleConfirmSessionNameACB}
-            handleCancelSessionName={handleCancelSessionNameACB}
-            setNewSessionName={setNewSessionName}
-            newSessionName={newSessionName}
-        />
-    )
-})
-
-
-
+    
     // For later use when we integrate firebase
     // const loadSessions = useCallback(async () => {
     //     try {
@@ -118,4 +83,24 @@ export const Home = observer(function HomeRender(props) {
     //     }
     // }, [model]);
 
-    
+    // Prepare training sessions with exerciseCount property
+    const sessionsWithExerciseCount = model.trainingSessions.map(session => ({
+        ...session,
+        id: session.id.toString(),
+        exerciseCount: Array.isArray(session.exercisesList) ? session.exercisesList.length : 0
+    }));
+        
+    return (
+        <HomeView
+            currentTrainingSessionID={model.currentTrainingSessionID}
+            trainingSessions={sessionsWithExerciseCount}
+            sessionNameModalVisible={sessionNameModalVisible}
+            handleSessionPress={handleSessionPressACB}
+            handleAddNewSessionPress={handleAddNewSessionPressACB}
+            handleConfirmSessionName={handleConfirmSessionNameACB}
+            handleCancelSessionName={handleCancelSessionNameACB}
+            setNewSessionName={setNewSessionName}
+            newSessionName={newSessionName}
+        />
+    )
+})

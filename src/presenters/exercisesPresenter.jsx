@@ -1,10 +1,14 @@
 import { observer } from "mobx-react-lite"
 import { ExercisesView } from "../views/exercisesView"
-import { useRouter } from "expo-router"
+import { useRouter, useLocalSearchParams } from "expo-router"
 import { Alert } from "react-native"
 
 export const Exercises = observer(function Exercises({ model }) {
     const router = useRouter()
+    const params = useLocalSearchParams()
+    
+    // Check if we're in "add to training" mode by looking for sessionID parameter
+    const isAddToTrainingMode = Boolean(params.sessionID)
     
     // Function to handle when user selects an exercise
     function handleExerciseSelectedACB(exercise) {
@@ -13,10 +17,7 @@ export const Exercises = observer(function Exercises({ model }) {
             
             // Log properties for debugging
             console.log("Exercise name:", exercise?.name)
-            console.log("Exercise targetMuscles:", exercise?.targetMuscles)
-            console.log("Exercise bodyParts:", exercise?.bodyParts)
-            console.log("Exercise equipments:", exercise?.equipments)
-            console.log("Exercise secondaryMuscles:", exercise?.secondaryMuscles)
+            console.log("isAddToTrainingMode:", isAddToTrainingMode)
             
             // Create a safe copy of the exercise with guaranteed array properties
             const safeExercise = {
@@ -28,42 +29,46 @@ export const Exercises = observer(function Exercises({ model }) {
                 secondaryMuscles: Array.isArray(exercise?.secondaryMuscles) ? [...exercise.secondaryMuscles] : []
             }
             
-            console.log("Safe exercise object created:", safeExercise)
-            
-            // Debug model state before adding exercise
-            console.log("Current training session ID before:", model?.currentTrainingSessionID)
-            console.log("Number of training sessions before:", model?.trainingSessions?.length)
-            
-            try {
-                // Add the exercise to the current training session
-                model.addExerciseToCurrentSession(safeExercise)
-                console.log("Exercise added successfully")
-            } catch (addError) {
-                console.error("Error in addExerciseToCurrentSession:", addError)
-                throw addError
-            }
-            
-            try {
-                // Change the current view in the model
-                model.setCurrentView("training")
-                console.log("Current view set to training")
-            } catch (viewError) {
-                console.error("Error in setCurrentView:", viewError)
-                throw viewError
-            }
-            
-            try {
-                // Navigate to training screen
-                console.log("Attempting to navigate to training screen")
-                router.replace("/training")
-                console.log("Navigation completed")
-            } catch (navError) {
-                console.error("Error during navigation:", navError)
-                throw navError
+            // If we're in add to training mode, add the exercise and navigate back
+            if (isAddToTrainingMode) {
+                console.log("Adding exercise to training session")
+                
+                try {
+                    // Add the exercise to the current training session
+                    model.addExerciseToCurrentSession(safeExercise)
+                    console.log("Exercise added successfully")
+                } catch (addError) {
+                    console.error("Error in addExerciseToCurrentSession:", addError)
+                    throw addError
+                }
+                
+                try {
+                    // Change the current view in the model
+                    model.setCurrentView("training")
+                    console.log("Current view set to training")
+                } catch (viewError) {
+                    console.error("Error in setCurrentView:", viewError)
+                    throw viewError
+                }
+                
+                try {
+                    // Navigate to training screen
+                    console.log("Attempting to navigate to training screen")
+                    router.replace("/training")
+                    console.log("Navigation completed")
+                } catch (navError) {
+                    console.error("Error during navigation:", navError)
+                    throw navError
+                }
+            } else {
+                // Just handle viewing the exercise details
+                console.log("Viewing exercise details (not adding to training)")
+                // You could navigate to a details page or show a modal
+                // router.push({pathname: "/exercise-details", params: {exerciseId: exercise.exerciseId}})
             }
         } catch (error) {
             console.error("Error handling exercise selection:", error)
-            Alert.alert("Error", "Failed to add exercise to training session: " + error.message)
+            Alert.alert("Error", "Failed to process exercise: " + error.message)
         }
     }
     
@@ -71,6 +76,8 @@ export const Exercises = observer(function Exercises({ model }) {
         <ExercisesView 
             onExerciseSelected={handleExerciseSelectedACB}
             allExercises={model?.allExercises || []}
+            isAddToTrainingMode={isAddToTrainingMode}
+            currentSessionID={params.sessionID}
         />
     )
 })
