@@ -1,61 +1,73 @@
 import { observer } from "mobx-react-lite"
 import { TrainingView } from "../views/trainingView"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "expo-router"
 
 export const Training = observer(function Training({ model }) {
     const [error, setError] = useState(null)
     const router = useRouter()
     
-    // Get the current training session
-    let currentSession = null
+    // IMPORTANT: Log when this component re-renders
+    console.log("Training presenter rendering");
+    
+    // Get the current training session directly from the model on each render
+    let currentSession = null;
     try {
         if (model?.currentTrainingSessionID && model?.trainingSessions) {
-            currentSession = model.trainingSessions.find(
-                s => s.id.toString() === model.currentTrainingSessionID.toString()
-            )
+            currentSession = model.getCurrentSession(model.currentTrainingSessionID);
+            console.log("Training presenter: current session has", 
+                       currentSession?.exercisesList?.length || 0, "exercises");
         }
     } catch (err) {
-        console.error("Error retrieving current session:", err)
-        setError("Failed to retrieve training session")
+        console.error("Error retrieving current session:", err);
+        setError("Failed to retrieve training session");
     }
     
     function handleAddExerciseACB() {
         try {
             // Change current view in model
-            model.setCurrentView("exercises")
+            model.setCurrentView("exercises");
             
             // Navigate to exercises
-            router.replace("/exercises")
+            router.replace("/exercises");
         } catch (err) {
-            console.error("Navigation error:", err)
-            setError("Failed to navigate to exercises")
+            console.error("Navigation error:", err);
+            setError("Failed to navigate to exercises");
         }
     }
     
     function handleSaveSessionACB(session) {
         try {
             if (!model) {
-                console.error("Model is undefined")
-                setError("Model is undefined")
-                return
+                console.error("Model is undefined");
+                setError("Model is undefined");
+                return;
             }
+            
+            console.log("handleSaveSessionACB: Saving session with", 
+                       session.exercisesList?.length || 0, "exercises");
             
             // Find if this session already exists
             const sessionIndex = model.trainingSessions.findIndex(
                 s => s.id.toString() === session.id.toString()
-            )
+            );
             
             if (sessionIndex !== -1) {
-                // Update existing session
-                model.trainingSessions[sessionIndex] = session
+                // Create new array of sessions (important for reactivity)
+                const updatedSessions = [...model.trainingSessions];
+                
+                // Replace session in the array
+                updatedSessions[sessionIndex] = session;
+                
+                // Set the entire updated array back to the model
+                model.trainingSessions = updatedSessions;
             } else {
                 // Add as new session
-                model.addTrainingSession(session)
+                model.addTrainingSession(session);
             }
         } catch (err) {
-            console.error("Error saving session:", err)
-            setError("Failed to save training session")
+            console.error("Error saving session:", err);
+            setError("Failed to save training session");
         }
     }
     
@@ -65,6 +77,7 @@ export const Training = observer(function Training({ model }) {
             onAddExercise={handleAddExerciseACB}
             onSave={handleSaveSessionACB}
             error={error}
+            getCurrentSession={(id) => model.getCurrentSession(id)}
         />
-    )
-})
+    );
+});

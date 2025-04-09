@@ -17,6 +17,27 @@ export const model = {
     this.userID = userID
   },
 
+  getCurrentSession(sessionId) {
+    if (!sessionId) {
+      console.log("getCurrentSession: No session ID provided");
+      return null;
+    }
+    
+    // Find the current session by ID
+    const session = this.trainingSessions.find(
+      s => s.id.toString() === sessionId.toString()
+    );
+    
+    if (session) {
+      console.log("getCurrentSession: Found session with", 
+                  session.exercisesList?.length || 0, "exercises");
+    } else {
+      console.log("getCurrentSession: No session found with ID", sessionId);
+    }
+    
+    return session;
+  },
+
   setCurrentTrainingSessionID(trainingSessionID) {
     this.currentTrainingSessionID = trainingSessionID
   },
