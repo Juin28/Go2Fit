@@ -15,7 +15,7 @@ import { searchExercises } from "../dishSource";
 import { muscleNameOptions, equipmentNameOptions, bodyPartNameOptions } from '../apiParams';
 
 export function ExercisesView(props) {
-  const { onExerciseSelected } = props;
+  const { onExerciseSelected, isAddToTrainingMode, currentSessionID, model } = props;
   
   // Options for filter chips
   const muscleOptions = ['All', ...muscleNameOptions];
@@ -162,7 +162,13 @@ export function ExercisesView(props) {
   // Handle exercise selection (asynchronous callback)
   function handleExerciseSelectACB(exercise) {
     console.log('Exercise selected:', exercise.name);
-    if (onExerciseSelected) {
+    
+    if (isAddToTrainingMode) {
+      console.log('Adding to training session:', currentSessionID);
+      onExerciseSelected(exercise);
+    } else {
+      console.log('View exercise details (not adding to training)');
+      // Handle viewing exercise details here
       onExerciseSelected(exercise);
     }
   }
@@ -375,10 +381,13 @@ export function ExercisesView(props) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Exercise Library</Text>
-        <Text style={styles.exerciseCount}>
-          {filteredExercises.length} exercises available
-          {!fetchComplete && totalExercises > 0 && ` (Loading ${fetchingProgress}/${totalExercises})`}
-        </Text>
+        {isAddToTrainingMode && (
+          <View style={styles.addModeContainer}>
+            <Text style={styles.addModeText}>
+              Select an exercise to add to your workout
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Search Bar and Filter Toggle Button */}

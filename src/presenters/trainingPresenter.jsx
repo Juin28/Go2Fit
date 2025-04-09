@@ -24,17 +24,12 @@ export const Training = observer(function Training({ model }) {
     }
     
     function handleAddExerciseACB() {
-        try {
-            // Change current view in model
-            model.setCurrentView("exercises");
-            
-            // Navigate to exercises
-            router.replace("/exercises");
-        } catch (err) {
-            console.error("Navigation error:", err);
-            setError("Failed to navigate to exercises");
-        }
-    }
+        // Navigate to exercises with the sessionID as a parameter
+        router.push({
+          pathname: "/exercises",
+          params: { sessionID: currentSession.id }  // Pass just the sessionID
+        });
+      }
     
     function handleSaveSessionACB(session) {
         try {
