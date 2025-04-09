@@ -947,8 +947,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    letterSpacing: 0.5,
+    textAlign: 'center', // Ensure text is centered
   },
   errorText: {
     color: 'red',
