@@ -10,10 +10,9 @@ import { HomeView } from '../views/homeView';
 export const Home = observer(function HomeRender(props) {
     const { model } = props
     const navigation = useNavigation();
-    const [trainingSessions, setTrainingSessions] = useState(model.trainingSessions);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [currentSessionId, setCurrentSessionId] = useState(model.currentTrainingSessionID);
+    
     
 //     const [trainingSessions, setTrainingSessions] = useState(
 //         global.trainingSessions.map(session => ({
@@ -53,8 +52,8 @@ export const Home = observer(function HomeRender(props) {
       };
     return (
         <HomeView
-            currentTrainingSessionID={currentSessionId}
-            trainingSessions={trainingSessions}
+            currentTrainingSessionID={model.currentTrainingSessionID}
+            trainingSessions={model.trainingSessions}
             handleSessionPress={handleSessionPressACB}
             handleAddNewSessionPress={handleAddNewSessionPressACB}
             
