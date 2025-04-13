@@ -1,4 +1,4 @@
-import {FIREBASE_DB} from './firestoreModel'
+import { FIREBASE_DB } from './firestoreModel'
 import { collection, doc, setDoc, getDoc, addDoc, querySnapshot } from 'firebase/firestore'
 
 

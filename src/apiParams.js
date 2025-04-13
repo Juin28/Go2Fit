@@ -1,56 +1,3 @@
-// const muscleNameOptions = [
-//     "wrists",
-//     "wrist flexors",
-//     "brachialis",
-//     "feet",
-//     "groin",
-//     "core",
-//     "hip flexors",
-//     "spine",
-//     "triceps",
-//     "cardiovascular system",
-//     "quads",
-//     "calves",
-//     "quadriceps",
-//     "shins",
-//     "sternocleidomastoid",
-//     "grip muscles",
-//     "wrist extensors",
-//     "lower abs",
-//     "inner thighs",
-//     "ankles",
-//     "chest",
-//     "rear deltoids",
-//     "shoulders",
-//     "serratus anterior",
-//     "abductors",
-//     "lats",
-//     "glutes",
-//     "abdominals",
-//     "hands",
-//     "latissimus dorsi",
-//     "rotator cuff",
-//     "deltoids",
-//     "upper chest",
-//     "trapezius",
-//     "ankle stabilizers",
-//     "rhomboids",
-//     "lower back",
-//     "obliques",
-//     "traps",
-//     "upper back",
-//     "biceps",
-//     "pectorals",
-//     "levator scapulae",
-//     "forearms",
-//     "adductors",
-//     "abs",
-//     "delts",
-//     "hamstrings",
-//     "soleus",
-//     "back"
-// ];
-
 const muscleNameOptions = [
     "abs",
     "abdominals",
@@ -106,37 +53,6 @@ const muscleNameOptions = [
     "wrists"
 ];
 
-// const equipmentNameOptions = [
-//     "tire",
-//     "elliptical machine",
-//     "roller",
-//     "olympic barbell",
-//     "upper body ergometer",
-//     "rope",
-//     "barbell",
-//     "medicine ball",
-//     "stability ball",
-//     "hammer",
-//     "smith machine",
-//     "dumbbell",
-//     "ez barbell",
-//     "stepmill machine",
-//     "trap bar",
-//     "stationary bike",
-//     "skierg machine",
-//     "bosu ball",
-//     "resistance band",
-//     "band",
-//     "leverage machine",
-//     "wheel roller",
-//     "weighted",
-//     "sled machine",
-//     "assisted",
-//     "body weight",
-//     "cable",
-//     "kettlebell"
-// ];
-
 const equipmentNameOptions = [
     "assisted",
     "band",
@@ -165,19 +81,6 @@ const equipmentNameOptions = [
     "weighted",
     "wheel roller"
 ];
-
-// const bodyPartNameOptions = [
-//     "lower legs",
-//     "cardio",
-//     "waist",
-//     "lower arms",
-//     "neck",
-//     "upper legs",
-//     "upper arms",
-//     "back",
-//     "chest",
-//     "shoulders"
-// ];
 
 const bodyPartNameOptions = [
     "back",
