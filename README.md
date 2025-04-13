@@ -3,7 +3,7 @@
 ## Short Description
 Go2Fit is a fitness-focused mobile application designed to help users track their fitness activities, manage their profiles, and access detailed reports. The app is built using React Native and leverages `mobx-react-lite` for state management and `expo-router` for navigation.
 
-## What You Have Done
+## What We Have Done
 - Implemented a tab navigation system for seamless navigation between screens.
 - Integrated `mobx-react-lite` for reactive state management across the app.
 - Finished the basic UI and functions for `Home`, `Training`, `Exercises`, `Report` and `Profile` tabs.
@@ -13,7 +13,7 @@ Go2Fit is a fitness-focused mobile application designed to help users track thei
 - Fetching all the exercises from the API and showed the progress.
 - Finished the `Training` and `Exercises` tabs.
 
-## What You Still Plan to Do
+## What We Still Plan to Do
 - Implement the `Report` tab with the actual training data for each user.
 - Implement the delete function for training session at `Home`.
 - Implement the search function at the `Home` tab so that the user can filter or search different training sessions.
