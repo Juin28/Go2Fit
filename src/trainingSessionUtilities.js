@@ -1,5 +1,7 @@
+
 import {FIREBASE_DB} from './firestoreModel'
 import { collection, doc, setDoc, getDoc, addDoc, query, where,getDocs} from 'firebase/firestore'
+
 
 // The training sessions is saved in this way:
 // e.g. 

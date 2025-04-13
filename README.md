@@ -1,50 +1,62 @@
-# Welcome to your Expo app 👋
+# Project: Go2Fit
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Short Description
+Go2Fit is a fitness-focused mobile application designed to help users track their fitness activities, manage their profiles, and access detailed reports. The app is built using React Native and leverages `mobx-react-lite` for state management and `expo-router` for navigation.
 
-## Get started
+## What We Have Done
+- Implemented a tab navigation system for seamless navigation between screens.
+- Integrated `mobx-react-lite` for reactive state management across the app.
+- Finished the basic UI and functions for `Home`, `Training`, `Exercises`, `Report` and `Profile` tabs.
+- Save training sessions data to Firebase for persistence.
+- Completed the integration between the `Training` and `Exercises` tabs.
+- Set up the user authentication using Firebase Authentication.
+- Fetching all the exercises from the API and showed the progress.
+- Finished the `Training` and `Exercises` tabs.
 
-1. Install dependencies
+## What We Still Plan to Do
+- Implement the `Report` tab with the actual training data for each user.
+- Implement the delete function for training session at `Home`.
+- Implement the search function at the `Home` tab so that the user can filter or search different training sessions.
 
-   ```bash
-   npm install
-   ```
+## Project File Structure
+### `/src/app`
+- **_layout.jsx**: The basic layout of our app to display different tabs.
+- **index.jsx**: The component to display all the training sessions the user has created.
+- **training.jsx**: The component to display the details of the selected training session.
+- **exercises.jsx**: The component to display all the exercises we fetched from the API.
+- **report.jsx**: The component to display the user's workout history.
+- **profile.jsx**: The component for user's authentication and update user's information.
 
-2. Start the app
+### `/src/presenters`
+- **homePresenter.jsx**: The presenter for the `Home` tab, which handles the business logics and passes the props down to the view.
+- **trainingPresenter.jsx**: The presenter for the `Training` tab, which handles the business logics and passes the props down to the view.
+- **exercisesPresenter.jsx**: The presenter for the `Exercises` tab, which handles the business logics and passes the props down to the view.
+- **reportPresenter.jsx**: The presenter for the `Report` tab, which handles the business logics and passes the props down to the view.
+- **profilePresenter.jsx**: The presenter for the `Profile` tab, which handles the business logics and passes the props down to the view.
 
-   ```bash
-    npx expo start
-   ```
+### `/src/views`
+- **homeView.jsx**: The view for the `Home` tab, which receives the prop from the presenter and displays the UI.
+- **trainingView.jsx**: The view for the `Training` tab, which receives the prop from the presenter and displays the UI.
+- **exercisesView.jsx**: The view for the `Exercises` tab, which receives the prop from the presenter and displays the UI.
+- **reportView.jsx**: The view for the `Report` tab, which receives the prop from the presenter and displays the UI.
+- **profileView.jsx**: The view for the `Profile` tab, which receives the prop from the presenter and displays the UI.
 
-In the output, you'll find options to open the app in a
+### `/src/bootstrapping.js`
+- The MobX state model used across the app for managing reactive data.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### `/src/trainingSessionUtilities.js`
+- The helper functions to access the Firebase database
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### `/src/apiParams.js`
+- The possible parameters while fetching the API
 
-## Get a fresh project
+### `/src/resolvePromise.js`
+- The helper function to resolve the promises
 
-When you're ready, run:
+### `/Flow.jpeg`
+- The basic flow of our app
 
-```bash
-npm run reset-project
-```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
