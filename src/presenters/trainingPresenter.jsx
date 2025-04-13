@@ -42,6 +42,9 @@ export const Training = observer(function Training({ model }) {
             console.log("handleSaveSessionACB: Saving session with", 
                        session.exercisesList?.length || 0, "exercises");
             
+            // Create a deep clone to ensure reactivity
+            const sessionToSave = JSON.parse(JSON.stringify(session));
+            
             // Find if this session already exists
             const sessionIndex = model.trainingSessions.findIndex(
                 s => s.id.toString() === session.id.toString()
@@ -52,14 +55,21 @@ export const Training = observer(function Training({ model }) {
                 const updatedSessions = [...model.trainingSessions];
                 
                 // Replace session in the array
-                updatedSessions[sessionIndex] = session;
+                updatedSessions[sessionIndex] = sessionToSave;
                 
                 // Set the entire updated array back to the model
                 model.trainingSessions = updatedSessions;
+                
+                // Ensure currentTrainingSessionID is set correctly
+                model.setCurrentTrainingSessionID(session.id);
+                
+                console.log("Session updated in model:", sessionToSave);
             } else {
                 // Add as new session
-                model.addTrainingSession(session);
+                model.addTrainingSession(sessionToSave);
+                console.log("Session added to model:", sessionToSave);
             }
+            
         } catch (err) {
             console.error("Error saving session:", err);
             setError("Failed to save training session");

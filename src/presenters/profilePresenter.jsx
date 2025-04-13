@@ -154,6 +154,7 @@ function useProfilePresenter(model) {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      model.isAuthenticated = true;
       showToast('success', 'Welcome back!', 'You are logged in successfully');
     } catch (error) {
       console.error('Sign in error:', error);
@@ -365,6 +366,7 @@ function useProfilePresenter(model) {
       await signOut(auth);
       model.setUserID(null);
       resetForm();
+      model.isAuthenticated = false;
       showToast('success', 'Logged out successfully');
     } catch (error) {
       console.error('Logout error:', error);
