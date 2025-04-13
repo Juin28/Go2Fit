@@ -1,3 +1,4 @@
+import React, { useState } from "react"
 import {
   Dimensions,
   ScrollView,
@@ -7,46 +8,85 @@ import {
   Pressable,
 } from "react-native"
 import { BarChart } from "react-native-chart-kit"
-import { useState } from "react"
 
-const { width } = Dimensions.get("window")
+const { width: screenWidth } = Dimensions.get("window")
 
 const CHART_DATA = {
-  Day: [55, 30, 190, 270, 120, 180,55, 30, 190, 270, 120, 180,],
-  Week: [80, 160, 100, 40, 180, 210, 210],
-  Month: [300, 240, 200, 180, 250, 220, 280, 310,55, 30, 190, 270, 120, 180,],
-  Year: [200, 120, 160],
+  Day: [0, 0, 0, 0, 0, 0, 0, 0, 190, 270, 0, 0, 0, 180, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  Week: [235, 160, 100, 0, 0, 210, 210],
+  Month: [300, 240, 200, 180, 250, 220, 280, 310, 55, 30, 190, 270, 300, 240, 200, 180, 250, 220, 280, 310, 55, 30, 220, 280, 310, 55, 30, 190, 270, 300],
+  Year: [3200, 5120, 7160, 2900, 2300, 4200, 1500, 5120, 7160, 2900, 2300, 4200],
 }
 
 const TAB_OPTIONS = ["Day", "Week", "Month", "Year"]
 
-export function ReportView(props) {
+const getXAxisLabels = (tab, length) => {
+  let baseLabels = []
+  switch (tab) {
+    case "Day": {
+      const hours = Array(length).fill("")
+      hours[0] = "0"
+      hours[6] = "6"
+      hours[12] = "12"
+      hours[18] = "18"
+      baseLabels = hours
+      break
+    }
+    case "Week":
+      baseLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+      break
+    case "Month": {
+      const labels = Array(length).fill("")
+      const step = Math.ceil(length / 5)
+      for (let i = 0; i < length; i += step) {
+        labels[i] = `${i + 1}`
+      }
+      labels[length - 1] = `${length}`
+      baseLabels = labels
+      break
+    }
+    case "Year":
+      baseLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+      break
+    default:
+      baseLabels = []
+  }
+  return baseLabels.map(label => label ? ` ${label}` : "")
+}
+
+export function ReportView() {
   const [activeTab, setActiveTab] = useState("Day")
+  const [selectedBar, setSelectedBar] = useState(null)
+
+  const rawData = CHART_DATA[activeTab]
+  const totalRawData = CHART_DATA["Year"]
+
+  const filteredData = rawData.map((val) => (val === 0 ? null : val))
+  const barColors = rawData.map((val) =>
+    val === 0 ? () => "transparent" : () => "#3b82f6"
+  )
+
+  const labels = getXAxisLabels(activeTab, rawData.length)
 
   const chartData = {
-    labels: Array.from({ length: CHART_DATA[activeTab].length }, (_, i) => `${i}`),
+    labels,
     datasets: [
       {
-        data: CHART_DATA[activeTab],
-        colors: Array(CHART_DATA[activeTab].length).fill(() => "#3b82f6"),
+        data: filteredData,
+        colors: barColors,
       },
     ],
   }
 
-
-
-const screenWidth = Dimensions.get("window").width
-const columnCount = chartData.labels.length
-const BAR_WIDTH = 60
-
-const chartWidth = 
-  columnCount < 6 ? screenWidth - 40 : columnCount * BAR_WIDTH
+  const barCount = chartData.labels.length
+  const chartWidth = screenWidth - 40
+  const barPercentage = Math.min(1, Math.max(0.2, 6 / barCount))
 
   const chartConfig = {
     backgroundGradientFrom: "#ffffff",
     backgroundGradientTo: "#ffffff",
     decimalPlaces: 0,
-    barPercentage: columnCount < 6 ? 1 : 0.6, 
+    barPercentage,
     color: () => "#000",
     labelColor: () => "#000",
     propsForBackgroundLines: {
@@ -54,22 +94,38 @@ const chartWidth =
       strokeWidth: 1,
     },
   }
-  
+
+  const totalWorkouts = 562
+  const totalTime = totalRawData.reduce((sum, val) => sum + val, 0)
+  const totalVolume = 562 * 10000
+
+  const infoStats = [
+    { label: "Workouts", value: totalWorkouts },
+    { label: "Time(min)", value: totalTime },
+    { label: "Volume(kg)", value: totalVolume },
+  ]
+
+  const todayLabel = {
+    Day: "Today",
+    Week: "This Week",
+    Month: "This Month",
+    Year: "This Year",
+  }[activeTab]
+
+  const todayValue = rawData.reduce((sum, val) => sum + val, 0)
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Total</Text>
 
-
       <View style={styles.infoRow}>
-        {["Workouts", "Time(min)", "Volume(kg)"].map((label) => (
+        {infoStats.map(({ label, value }) => (
           <View key={label} style={styles.infoCard}>
             <Text style={styles.infoLabel}>{label}</Text>
-            <Text style={styles.infoValue}>0</Text>
+            <Text style={styles.infoValue}>{value}</Text>
           </View>
         ))}
       </View>
-
 
       <View style={styles.tabContainer}>
         {TAB_OPTIONS.map((option) => {
@@ -77,7 +133,10 @@ const chartWidth =
           return (
             <Pressable
               key={option}
-              onPress={() => setActiveTab(option)}
+              onPress={() => {
+                setActiveTab(option)
+                setSelectedBar(null)
+              }}
               style={[styles.tabButton, selected && styles.activeTabButton]}
             >
               <Text style={[styles.tabText, selected && styles.activeTabText]}>
@@ -86,57 +145,45 @@ const chartWidth =
             </Pressable>
           )
         })}
-
-        
       </View>
-      <View style={styles.chartCard}>
-  {columnCount >= 6 ? (
 
-    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-      <View style={{alignItems: "center", width: chartWidth }}>
+      <View style={styles.chartCard}>
         <BarChart
           data={chartData}
           width={chartWidth}
           height={300}
           fromZero
-          showValuesOnTopOfBars
+          showValuesOnTopOfBars={false}
           withInnerLines
           withHorizontalLabels
+          withCustomBarColorFromData
+          flatColor={false}
           chartConfig={chartConfig}
           verticalLabelRotation={0}
-          withCustomBarColorFromData
-          flatColor
+          onDataPointClick={({ value, index }) => {
+            if (value === null) return
+            setSelectedBar({
+              index,
+              label: chartData.labels[index],
+              value,
+            })
+          }}
           style={styles.chart}
         />
+        <Text style={styles.yAxisLabel}>Time/{"\n"}min</Text>
       </View>
-    </ScrollView>
-  ) : (
 
-    <BarChart
-      data={chartData}
-      width={screenWidth - 40}
-      height={300}
-      fromZero
-      showValuesOnTopOfBars
-      withInnerLines
-      withHorizontalLabels
-      chartConfig={chartConfig}
-      verticalLabelRotation={0}
-      withCustomBarColorFromData
-      flatColor
-      style={styles.chart}
-    />
-  )}
-  <Text style={styles.yAxisLabel}>Time/{"\n"}min</Text>
-</View>
-
-
-
-
+      {selectedBar && (
+        <View style={styles.tooltipCard}>
+          <Text style={styles.tooltipText}>
+            {activeTab} - {selectedBar.label}: {selectedBar.value} min
+          </Text>
+        </View>
+      )}
 
       <View style={styles.todayCard}>
-        <Text style={styles.todayLabel}>Today</Text>
-        <Text style={styles.todayValue}>0</Text>
+        <Text style={styles.todayLabel}>{todayLabel}</Text>
+        <Text style={styles.todayValue}>{todayValue}</Text>
       </View>
     </ScrollView>
   )
@@ -144,10 +191,9 @@ const chartWidth =
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,          
-    // justifyContent: 'space-between',
-    paddingBottom: 100000,       
-    backgroundColor: '#fff',
+    flexGrow: 1,
+    paddingBottom: 100,
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 28,
@@ -163,7 +209,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flex: 1,
-    marginTop:10,
+    marginTop: 10,
     backgroundColor: "#f4f4f4",
     marginHorizontal: 5,
     paddingVertical: 12,
@@ -206,7 +252,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   chartCard: {
-    marginTop:5,
+    marginTop: 5,
     marginHorizontal: 20,
     padding: 10,
     paddingBottom: 30,
@@ -224,6 +270,18 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "-90deg" }],
     fontSize: 12,
     color: "#888",
+  },
+  tooltipCard: {
+    marginTop: 16,
+    marginHorizontal: 20,
+    padding: 12,
+    backgroundColor: "#e6f0ff",
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  tooltipText: {
+    fontSize: 16,
+    color: "#333",
   },
   todayCard: {
     marginTop: 40,
