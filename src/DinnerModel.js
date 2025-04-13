@@ -13,8 +13,9 @@ export const model = {
   currentView: "home", // Add this for navigation tracking
   ready: true, // For layout rendering
   
-  setUserID(userID) {
-    this.userID = userID
+  setUserID(userId) {
+    console.log("Setting userId in model:", userId);
+    this.userId = userId;
   },
 
   getCurrentSession(sessionId) {
@@ -56,7 +57,11 @@ export const model = {
       trainingSession => trainingSession.id !== trainingSessionToRemove.id
     )
   },
-  
+
+  findSessionById(sessionId) {
+    return this.trainingSessions.find(s => s.id===sessionId)
+  },
+
   // Your existing method for adding exercise to session
   addExerciseToCurrentSession(exercise) {
     console.log("addExerciseToCurrentSession called with:", exercise?.name)

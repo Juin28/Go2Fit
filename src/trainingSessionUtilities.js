@@ -1,5 +1,6 @@
-import { FIREBASE_DB } from './firestoreModel'
-import { collection, doc, setDoc, getDoc, addDoc, querySnapshot } from 'firebase/firestore'
+
+import {FIREBASE_DB} from './firestoreModel'
+import { collection, doc, setDoc, getDoc, addDoc, query, where,getDocs} from 'firebase/firestore'
 
 
 // The training sessions is saved in this way:
@@ -17,11 +18,11 @@ import { collection, doc, setDoc, getDoc, addDoc, querySnapshot } from 'firebase
 
 // This function adds a new session to the database, referenced by the userId.
 // and returns the sessionId.
-export async function addNewSession(userId, sessionData) {
+export async function addNewSessionToFireStore(userId, sessionData) {
 
     try {
         const sessionRef = await addDoc(collection(FIREBASE_DB, "sessions"),  //collection() will automatically generate a new id for the session
-        {userId,
+        {userId:userId,
          ...sessionData, 
          createdAt: new Date()});
 
@@ -35,14 +36,23 @@ export async function addNewSession(userId, sessionData) {
 
 // this function edits a session, referenced by the sessionId.
 // It completely replaces the sessionData with the new sessionData.
-export async function editSession(sessionId, sessionData){
+export async function editSession(userId, sessionId, sessionData){
     try{
+        console.log(`Editing session ${sessionId} for user ${userId}`, sessionData);
         const sessionRef = doc(FIREBASE_DB, "sessions", sessionId);
         const docSnap = await getDoc(sessionRef);
         if (!docSnap.exists()){
             throw new Error("Session not found with id: " + sessionId);
         }
-        await setDoc(sessionRef, sessionData);
+        
+        // Ensure userId is included in the data
+        const dataToSave = {
+            ...sessionData,
+            userId: userId
+        };
+        
+        await setDoc(sessionRef, dataToSave);
+        console.log(`Successfully edited session ${sessionId}`);
     } catch (error) {
         if (error.message.includes("Session not found")){
             throw error;
