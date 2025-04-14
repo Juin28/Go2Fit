@@ -12,7 +12,7 @@ import { BarChart } from "react-native-chart-kit"
 const { width: screenWidth } = Dimensions.get("window")
 
 const CHART_DATA = {
-  Day: [0, 0, 0, 0, 0, 0, 0, 0, 190, 270, 0, 0, 0, 180, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  Day: [0, 0, 0, 0, 0, 0, 0, 0, 60, 35, 0, 0, 0, 60, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   Week: [235, 160, 100, 0, 0, 210, 210],
   Month: [300, 240, 200, 180, 250, 220, 280, 310, 55, 30, 190, 270, 300, 240, 200, 180, 250, 220, 280, 310, 55, 30, 220, 280, 310, 55, 30, 190, 270, 300],
   Year: [3200, 5120, 7160, 2900, 2300, 4200, 1500, 5120, 7160, 2900, 2300, 4200],
@@ -54,9 +54,12 @@ const getXAxisLabels = (tab, length) => {
   return baseLabels.map(label => label ? ` ${label}` : "")
 }
 
-export function ReportView() {
+export function ReportView(props) {
   const [activeTab, setActiveTab] = useState("Day")
   const [selectedBar, setSelectedBar] = useState(null)
+
+ // we'll use real data later 
+ // const CHART_DATA = props.chartData
 
   const rawData = CHART_DATA[activeTab]
   const totalRawData = CHART_DATA["Year"]
@@ -105,12 +108,12 @@ export function ReportView() {
     { label: "Volume(kg)", value: totalVolume },
   ]
 
-  const todayLabel = {
+  const todayLabel =" Workout Time for "  +{
     Day: "Today",
     Week: "This Week",
     Month: "This Month",
     Year: "This Year",
-  }[activeTab]
+  }[activeTab] 
 
   const todayValue = rawData.reduce((sum, val) => sum + val, 0)
 
@@ -183,7 +186,7 @@ export function ReportView() {
 
       <View style={styles.todayCard}>
         <Text style={styles.todayLabel}>{todayLabel}</Text>
-        <Text style={styles.todayValue}>{todayValue}</Text>
+        <Text style={styles.todayValue}>{todayValue} min</Text>
       </View>
     </ScrollView>
   )
