@@ -9,14 +9,15 @@ import {
   SafeAreaView,
   TextInput,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { searchExercises } from "../dishSource";
 import { muscleNameOptions, equipmentNameOptions, bodyPartNameOptions } from '../apiParams';
 
 export function ExercisesView(props) {
   const { onExerciseSelected, isAddToTrainingMode, currentSessionID, model } = props;
-  
+
   // Options for filter chips
   const muscleOptions = ['All', ...muscleNameOptions];
   const equipmentOptions = ['All', ...equipmentNameOptions];
@@ -30,7 +31,7 @@ export function ExercisesView(props) {
   const [selectedBodyParts, setSelectedBodyParts] = useState(['All']);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterSection, setShowFilterSection] = useState(true);
-  
+
   // Loading and API state
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -42,11 +43,11 @@ export function ExercisesView(props) {
   const [fetchComplete, setFetchComplete] = useState(false);
 
   // SYNCHRONOUS CALLBACKS
-  
+
   // Transform an exercise object into a component (synchronous callback)
   function exerciseToComponentCB(item) {
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.exerciseCard}
         onPress={() => handleExerciseSelectACB(item)}
         key={item.exerciseId}
@@ -59,18 +60,18 @@ export function ExercisesView(props) {
             </Text>
           </View>
         </View>
-        
+
         <View style={styles.detailsContainer}>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Body Part:</Text>
             <Text style={styles.detailValue}>{item.bodyParts ? item.bodyParts.join(', ') : 'N/A'}</Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Equipment:</Text>
             <Text style={styles.detailValue}>{item.equipments ? item.equipments.join(', ') : 'N/A'}</Text>
           </View>
-          
+
           {item.secondaryMuscles && item.secondaryMuscles.length > 0 && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Also works:</Text>
@@ -107,21 +108,21 @@ export function ExercisesView(props) {
   // Filter function - returns new filtered array (synchronous)
   function applyFiltersCB() {
     let result = [...allExercises];
-    
+
     // Helper function to filter by property (higher-order function)
     function filterByPropertyCB(items, selectedValues, propertyGetter) {
       if (selectedValues.includes('All')) {
         return items;
       }
-      
-      return items.filter(item => 
+
+      return items.filter(item =>
         selectedValues.some(value => {
           const properties = propertyGetter(item);
           return Array.isArray(properties) && properties.includes(value);
         })
       );
     }
-    
+
     // Apply muscle filter
     result = filterByPropertyCB(
       result,
@@ -131,21 +132,21 @@ export function ExercisesView(props) {
         ...(exercise?.secondaryMuscles || [])
       ]
     );
-    
+
     // Apply equipment filter
     result = filterByPropertyCB(
       result,
       selectedEquipments,
       (exercise) => exercise?.equipments || []
     );
-    
+
     // Apply body part filter
     result = filterByPropertyCB(
       result,
       selectedBodyParts,
       (exercise) => exercise?.bodyParts || []
     );
-    
+
     // Apply text search
     if (searchQuery) {
       const lowercaseQuery = searchQuery.toLowerCase();
@@ -153,7 +154,7 @@ export function ExercisesView(props) {
         (exercise?.name || '').toLowerCase().includes(lowercaseQuery)
       );
     }
-    
+
     return result;
   }
 
@@ -162,10 +163,26 @@ export function ExercisesView(props) {
   // Handle exercise selection (asynchronous callback)
   function handleExerciseSelectACB(exercise) {
     console.log('Exercise selected:', exercise.name);
-    
+
     if (isAddToTrainingMode) {
-      console.log('Adding to training session:', currentSessionID);
-      onExerciseSelected(exercise);
+      // Show confirmation alert before adding to training session
+      Alert.alert(
+        "Add Exercise",
+        `Do you want to add ${exercise.name} to your training session?`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Add",
+            onPress: () => {
+              console.log('Adding to training session:', currentSessionID);
+              onExerciseSelected(exercise);
+            }
+          }
+        ]
+      );
     } else {
       console.log('View exercise details (not adding to training)');
       // Handle viewing exercise details here
@@ -181,7 +198,7 @@ export function ExercisesView(props) {
       setSelectedMuscles(prev => {
         // Remove 'All' if it exists
         const newSelection = prev.includes('All') ? [] : [...prev];
-        
+
         // Toggle the selection
         if (newSelection.includes(muscle)) {
           const filtered = newSelection.filter(m => m !== muscle);
@@ -256,10 +273,10 @@ export function ExercisesView(props) {
       setError(null);
 
       const response = await searchExercises({});
-      
+
       const exercises = response.data.exercises || [];
       const total = response.data.totalExercises || exercises.length || 0;
-      
+
       setTotalExercises(total);
       setNextPageUrl(response.data.nextPage);
       setAllExercises(exercises);
@@ -296,33 +313,33 @@ export function ExercisesView(props) {
     }
 
     setIsPaginationLoading(true);
-    
+
     let currentUrl = initialUrl;
     let accumulatedExercises = [...initialExercises];
-    
+
     try {
       // Loop instead of recursion to avoid stack issues
       while (currentUrl && accumulatedExercises.length < totalCount) {
         const urlObj = new URL(currentUrl);
         const offset = urlObj.searchParams.get('offset');
         const limit = urlObj.searchParams.get('limit');
-        
+
         // Call searchExercises with pagination parameters
         const response = await searchExercises({ offset, limit });
-        
+
         // Check if we got a valid response with exercises
         if (response?.data?.exercises?.length > 0) {
           // Combine new exercises with existing ones (create new array)
           accumulatedExercises = [...accumulatedExercises, ...response.data.exercises];
-          
+
           // Update state with the latest accumulated exercises
           setAllExercises(accumulatedExercises);
           setFetchingProgress(accumulatedExercises.length);
-          
+
           // Get next page URL
           currentUrl = response.data.nextPage;
           setNextPageUrl(currentUrl);
-          
+
           // Safety check - don't exceed total exercises count
           if (accumulatedExercises.length >= totalCount) {
             break;
@@ -332,13 +349,13 @@ export function ExercisesView(props) {
           currentUrl = null;
         }
       }
-      
+
       // All pages fetched or limit reached
       setFetchComplete(true);
       setIsPaginationLoading(false);
       setIsLoading(false);
       setIsRefreshing(false);
-      
+
     } catch (err) {
       console.error('Error fetching additional exercises:', err);
       // Don't set error here as we already have some exercises loaded
@@ -365,7 +382,7 @@ export function ExercisesView(props) {
     return (
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.retryButton}
           onPress={() => fetchInitialExercisesACB(true)}
         >
@@ -399,7 +416,7 @@ export function ExercisesView(props) {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.filterToggleButton}
           onPress={toggleFilterSectionACB}
         >
@@ -412,11 +429,11 @@ export function ExercisesView(props) {
       {/* Progress Bar when loading all exercises */}
       {isPaginationLoading && totalExercises > 0 && (
         <View style={styles.progressContainer}>
-          <View 
+          <View
             style={[
-              styles.progressBar, 
+              styles.progressBar,
               { width: `${Math.min((fetchingProgress / totalExercises) * 100, 100)}%` }
-            ]} 
+            ]}
           />
           <Text style={styles.progressText}>
             Loading exercises: {fetchingProgress}/{totalExercises}
@@ -428,16 +445,16 @@ export function ExercisesView(props) {
       {showFilterSection && (
         <View style={styles.filterContainer}>
           <Text style={styles.sectionTitle}>Filter Exercises</Text>
-          
+
           <View style={styles.filterSection}>
             <Text style={styles.filterLabel}>By Muscle Group:</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={true} 
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={true}
               style={styles.filterScroll}
               contentContainerStyle={styles.filterScrollContent}
             >
-              {muscleOptions.map(muscle => 
+              {muscleOptions.map(muscle =>
                 filterOptionToComponentCB(muscle, selectedMuscles.includes(muscle), toggleMuscleSelectionACB)
               )}
             </ScrollView>
@@ -445,13 +462,13 @@ export function ExercisesView(props) {
 
           <View style={styles.filterSection}>
             <Text style={styles.filterLabel}>By Equipment:</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={true} 
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={true}
               style={styles.filterScroll}
               contentContainerStyle={styles.filterScrollContent}
             >
-              {equipmentOptions.map(equipment => 
+              {equipmentOptions.map(equipment =>
                 filterOptionToComponentCB(equipment, selectedEquipments.includes(equipment), toggleEquipmentSelectionACB)
               )}
             </ScrollView>
@@ -459,19 +476,19 @@ export function ExercisesView(props) {
 
           <View style={styles.filterSection}>
             <Text style={styles.filterLabel}>By Body Part:</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={true} 
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={true}
               style={styles.filterScroll}
               contentContainerStyle={styles.filterScrollContent}
             >
-              {bodyPartOptions.map(bodyPart => 
+              {bodyPartOptions.map(bodyPart =>
                 filterOptionToComponentCB(bodyPart, selectedBodyParts.includes(bodyPart), toggleBodyPartSelectionACB)
               )}
             </ScrollView>
           </View>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.resetButton}
             onPress={resetFiltersACB}
           >

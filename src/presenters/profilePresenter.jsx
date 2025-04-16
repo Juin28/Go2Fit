@@ -433,12 +433,6 @@ function useProfilePresenter(model) {
   };
 }
 
-// export const Profile = observer(function SummaryRender(props) {
-//     return (
-//         <ProfileView/>
-//     )
-// })
-
 export const Profile = observer(function SummaryRender(props) {
     const { model } = props;
     const presenter = useProfilePresenter(model);
