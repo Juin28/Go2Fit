@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Link } from 'expo-router';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export function TrainingView({ session, onAddExercise, onSave, error, getCurrentSession }) {
   // Component State - simplified sessionName state initialization
@@ -89,13 +90,13 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         
         <View style={styles.setsContainer}>
           <View style={styles.setsHeaderRow}>
-            <Text style={styles.setsHeader}>Sets:</Text>
+            <Text style={styles.setsHeader}>Sets</Text>
             {!workoutStarted && (
               <TouchableOpacity 
                 style={styles.addSetButton}
                 onPress={addSetACB(exerciseIndex)}
               >
-                <Text style={styles.addSetButtonText}>+ Add Set</Text>
+                <MaterialIcons name="add" size={16} color="white" />
               </TouchableOpacity>
             )}
           </View>
@@ -114,38 +115,40 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
   function setToComponentCB(set, setIndex, exerciseIndex, exercise) {
     return (
       <View key={setIndex} style={styles.setItemContainer}>
-        <TouchableOpacity
-          style={[
-            styles.setItem,
-            (exercise.completedSets || 0) > setIndex && styles.completedSetItem
-          ]}
-          onPress={toggleSetCompletionACB(exerciseIndex, setIndex)}
-          disabled={!workoutStarted} // Only disabled when workout is NOT started
-        >
-          <Text style={styles.setNumber}>Set {setIndex + 1}</Text>
-          <Text style={styles.setDetails}>
-            {set.weight > 0 ? `${set.weight} kg × ` : ''}{set.reps} reps
-          </Text>
-        </TouchableOpacity>
-        
-        {/* Edit and Delete buttons - only shown when workout has not started */}
-        {!workoutStarted && (
-          <View style={styles.setActions}>
-            <TouchableOpacity 
-              style={styles.setActionButton}
-              onPress={openEditSetModalACB(exerciseIndex, setIndex)}
-            >
-              <Text style={styles.setActionButtonText}>Edit</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.setActionButton, styles.deleteButton]}
-              onPress={deleteSetACB(exerciseIndex, setIndex)}
-            >
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <View style={styles.setRow}>
+          <TouchableOpacity
+            style={[
+              styles.setItem,
+              (exercise.completedSets || 0) > setIndex && styles.completedSetItem
+            ]}
+            onPress={toggleSetCompletionACB(exerciseIndex, setIndex)}
+            disabled={!workoutStarted}
+          >
+            <Text style={styles.setNumber}>{setIndex + 1}</Text>
+            <Text style={styles.setDetails}>
+              {set.weight > 0 ? `${set.weight}kg × ` : ''}{set.reps}
+            </Text>
+          </TouchableOpacity>
+          
+          {/* Edit and Delete buttons - only shown when workout has not started */}
+          {!workoutStarted && (
+            <View style={styles.setActionButtons}>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={openEditSetModalACB(exerciseIndex, setIndex)}
+              >
+                <MaterialIcons name="edit" size={18} color="#6C63FF" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={deleteSetACB(exerciseIndex, setIndex)}
+              >
+                <MaterialIcons name="delete" size={18} color="#FF5252" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
     );
   }
@@ -322,7 +325,6 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
   // Delete a set (curried function)
   function deleteSetACB(exerciseIndex, setIndex) {
     return function() {
-      // Create a deep copy of the session to properly trigger updates
       const updatedSession = JSON.parse(JSON.stringify(session));
       const exercise = updatedSession.exercisesList[exerciseIndex];
       
@@ -334,9 +336,44 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         exercise.completedSets = exercise.sets.length;
       }
       
-      // Save changes
-      if (onSave) {
-        onSave(updatedSession);
+      // Check if there are no sets left after deletion
+      if (!Array.isArray(exercise.sets) || exercise.sets.length === 0) {
+        // Ask user if they want to remove the exercise
+        Alert.alert(
+          "Remove Exercise?",
+          `${exercise.name} has no sets left. Do you want to remove this exercise?`,
+          [
+            {
+              text: "Keep Exercise",
+              style: "cancel",
+              onPress: () => {
+                // Just save the session with empty sets
+                if (onSave) {
+                  onSave(updatedSession);
+                }
+              }
+            },
+            {
+              text: "Remove Exercise",
+              style: "destructive",
+              onPress: () => {
+                // Remove the exercise from the list
+                updatedSession.exercisesList.splice(exerciseIndex, 1);
+                
+                // Save changes
+                if (onSave) {
+                  onSave(updatedSession);
+                }
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      } else {
+        // There are still sets left, just save the changes
+        if (onSave) {
+          onSave(updatedSession);
+        }
       }
     };
   }
@@ -562,8 +599,21 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         <Text style={styles.errorText}>No training session selected.</Text>
         <TouchableOpacity 
           style={styles.addButton} 
-          onPress={onAddExercise}
+          onPress={() => {
+            try {
+              console.log("Navigating to home to create new session");
+              router.push('/'); // Navigate to home/root route
+            } catch (error) {
+              console.error("Navigation error:", error);
+              // Fallback if direct navigation fails
+              Alert.alert(
+                "Navigation Failed",
+                "Please go to the home screen and create a new session."
+              );
+            }
+          }}
         >
+          <MaterialIcons name="fitness-center" size={20} color="white" />
           <Text style={styles.addButtonText}>Create New Session</Text>
         </TouchableOpacity>
       </View>
@@ -577,7 +627,7 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
     <View style={styles.container}>
       {error && <Text style={styles.errorText}>{error}</Text>}
       
-      <View style={styles.header}>
+      <View style={styles.headerRow}>
         {!workoutStarted ? (
           // Editable text input when not started
           <TextInput
@@ -590,12 +640,11 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
           // Display as text only when workout started
           <Text style={styles.sessionNameText}>{sessionName}</Text>
         )}
-      </View>
-      
-      {/* Timer Section - just display */}
-      <View style={styles.timerContainer}>
-        <Text style={styles.timerLabel}>Workout Time</Text>
-        <Text style={styles.timerDisplay}>{formatTimeCB(timerSeconds)}</Text>
+        
+        {/* Compact Timer */}
+        <View style={styles.timerContainer}>
+          <Text style={styles.timerDisplay}>{formatTimeCB(timerSeconds)}</Text>
+        </View>
       </View>
       
       <View style={styles.progressContainer}>
@@ -616,7 +665,8 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
               style={styles.markCompleteButton}
               onPress={markWorkoutCompleteACB}
             >
-              <Text style={styles.markCompleteButtonText}>Mark 100% Complete</Text>
+              <MaterialIcons name="done-all" size={14} color="#555" />
+              <Text style={styles.markCompleteButtonText}>100%</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -635,23 +685,25 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         )}
       </ScrollView>
       
-      {/* Bottom buttons */}
-      <View style={styles.bottomButtonsContainer}>
+      {/* Bottom action bar */}
+      <View style={styles.actionBar}>
         {!workoutStarted && (
           <TouchableOpacity 
-            style={styles.addButton} 
+            style={styles.actionButton}
             onPress={onAddExercise}
           >
-            <Text style={styles.addButtonText}>Add Exercise</Text>
+            <MaterialIcons name="fitness-center" size={24} color="#6C63FF" />
+            <Text style={styles.actionButtonText}>Add</Text>
           </TouchableOpacity>
         )}
-        
+
         {!workoutStarted && hasExercises ? (
           <TouchableOpacity 
-            style={styles.startButton} 
+            style={[styles.actionButton, styles.startActionButton]}
             onPress={startWorkoutACB}
           >
-            <Text style={styles.startButtonText}>Start Training Session</Text>
+            <MaterialIcons name="play-arrow" size={24} color="#4CAF50" />
+            <Text style={[styles.actionButtonText, styles.startActionButtonText]}>Start</Text>
           </TouchableOpacity>
         ) : null}
         
@@ -659,10 +711,11 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         {workoutStarted && (
           <Link href="/report" asChild>
             <TouchableOpacity 
-              style={styles.finishButton}
+              style={[styles.actionButton, styles.finishActionButton]}
               onPress={finishWorkoutACB}
             >
-              <Text style={styles.finishButtonText}>Finish Workout</Text>
+              <MaterialIcons name="check-circle" size={24} color="#FF6B6B" />
+              <Text style={[styles.actionButtonText, styles.finishActionButtonText]}>Finish</Text>
             </TouchableOpacity>
           </Link>
         )}
@@ -727,15 +780,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f7',
-    padding: 16,
+    padding: 12,
   },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   sessionNameInput: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     padding: 8,
     backgroundColor: 'white',
@@ -743,42 +797,37 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   sessionNameText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    padding: 8,
+    flex: 1,
   },
-  // Timer styles
+  // Compact timer styles
   timerContainer: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 6,
+    padding: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  timerLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
+    shadowRadius: 2,
+    elevation: 1,
   },
   timerDisplay: {
-    fontSize: 40,
+    fontSize: 18,
     fontWeight: 'bold',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     color: '#333',
   },
   progressContainer: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   progressBarBackground: {
-    height: 12,
+    height: 8,
     backgroundColor: '#e0e0e0',
-    borderRadius: 6,
+    borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 4,
   },
@@ -792,18 +841,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
   },
   markCompleteButton: {
     backgroundColor: '#f0f0f0',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   markCompleteButtonText: {
     fontSize: 12,
     color: '#555',
+    marginLeft: 4,
   },
   exercisesContainer: {
     flex: 1,
@@ -814,7 +866,7 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   emptyStateText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#666',
     marginBottom: 8,
@@ -826,150 +878,138 @@ const styles = StyleSheet.create({
   },
   exerciseCard: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 2,
+    elevation: 1,
   },
   exerciseName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   targetMuscleContainer: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   targetMuscleLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
   },
   targetMuscleValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#6C63FF',
   },
   setsContainer: {
-    marginTop: 8,
+    marginTop: 6,
   },
   setsHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   setsHeader: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   addSetButton: {
     backgroundColor: '#6C63FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-  },
-  addSetButtonText: {
-    color: 'white',
-    fontWeight: '500',
-    fontSize: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   setItemContainer: {
-    marginBottom: 8,
+    marginBottom: 6,
+  },
+  setRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   setItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: '#f5f5f7',
-    padding: 12,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 6,
+    flex: 1,
   },
   completedSetItem: {
     backgroundColor: '#e0f7e0',
-    borderLeftWidth: 4,
+    borderLeftWidth: 3,
     borderLeftColor: '#4CAF50',
   },
   setNumber: {
     fontWeight: '500',
+    fontSize: 14,
   },
   setDetails: {
     color: '#666',
+    fontSize: 14,
   },
-  setActions: {
+  setActionButtons: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingTop: 4,
+    marginLeft: 6,
   },
-  setActionButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginLeft: 8,
-    borderRadius: 4,
+  iconButton: {
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15,
+    marginLeft: 4,
     backgroundColor: '#f0f0f0',
-  },
-  setActionButtonText: {
-    fontSize: 12,
-    color: '#555',
-  },
-  deleteButton: {
-    backgroundColor: '#ffebee',
-  },
-  deleteButtonText: {
-    color: '#d32f2f',
-    fontSize: 12,
   },
   noSetsText: {
     fontStyle: 'italic',
     color: '#999',
+    fontSize: 12,
     marginTop: 4,
   },
-  // Bottom Buttons
-  bottomButtonsContainer: {
-    marginTop: 16,
+  // Action Bar
+  actionBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingTop: 12,
   },
-  addButton: {
-    backgroundColor: '#6C63FF',
-    padding: 16,
-    borderRadius: 8,
+  actionButton: {
     alignItems: 'center',
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  addButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  actionButtonText: {
+    fontSize: 12,
+    marginTop: 4,
+    color: '#6C63FF',
+    fontWeight: '500',
   },
-  startButton: {
-    backgroundColor: '#4CAF50',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
+  startActionButton: {
+    // No background, just icons and text
   },
-  startButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  startActionButtonText: {
+    color: '#4CAF50',
   },
-  finishButton: {
-    backgroundColor: '#FF6B6B',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
+  finishActionButton: {
+    // No background, just icons and text
   },
-  finishButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-    textAlign: 'center', // Ensure text is centered
+  finishActionButtonText: {
+    color: '#FF6B6B',
   },
   errorText: {
     color: 'red',
-    marginBottom: 16,
-    fontSize: 16,
+    marginBottom: 12,
+    fontSize: 14,
     textAlign: 'center',
   },
   // Modal styles
@@ -981,9 +1021,9 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    width: '80%',
+    borderRadius: 10,
+    padding: 16,
+    width: '85%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -991,24 +1031,24 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 12,
     color: '#333',
     textAlign: 'center',
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#555',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   modalInput: {
     backgroundColor: '#f5f5f7',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 6,
+    padding: 10,
     fontSize: 16,
   },
   modalButtons: {
@@ -1017,11 +1057,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   modalButton: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 6,
     flex: 1,
-    marginHorizontal: 8,
+    marginHorizontal: 6,
     alignItems: 'center',
   },
   cancelButton: {
@@ -1037,5 +1077,20 @@ const styles = StyleSheet.create({
   saveModalButtonText: {
     color: 'white',
     fontWeight: '500',
+  },
+  // Add button styles
+  addButton: {
+    backgroundColor: '#6C63FF',
+    padding: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginLeft: 8,
   },
 });
