@@ -90,14 +90,13 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         
         <View style={styles.setsContainer}>
           <View style={styles.setsHeaderRow}>
-            <Text style={styles.setsHeader}>Sets:</Text>
+            <Text style={styles.setsHeader}>Sets</Text>
             {!workoutStarted && (
               <TouchableOpacity 
                 style={styles.addSetButton}
                 onPress={addSetACB(exerciseIndex)}
               >
-                <MaterialIcons name="add-circle" size={16} color="white" />
-                <Text style={styles.addSetButtonText}>Add Set</Text>
+                <MaterialIcons name="add" size={16} color="white" />
               </TouchableOpacity>
             )}
           </View>
@@ -125,9 +124,9 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
             onPress={toggleSetCompletionACB(exerciseIndex, setIndex)}
             disabled={!workoutStarted}
           >
-            <Text style={styles.setNumber}>Set {setIndex + 1}</Text>
+            <Text style={styles.setNumber}>{setIndex + 1}</Text>
             <Text style={styles.setDetails}>
-              {set.weight > 0 ? `${set.weight} kg × ` : ''}{set.reps} reps
+              {set.weight > 0 ? `${set.weight}kg × ` : ''}{set.reps}
             </Text>
           </TouchableOpacity>
           
@@ -138,14 +137,14 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
                 style={styles.iconButton}
                 onPress={openEditSetModalACB(exerciseIndex, setIndex)}
               >
-                <MaterialIcons name="edit" size={22} color="#6C63FF" />
+                <MaterialIcons name="edit" size={18} color="#6C63FF" />
               </TouchableOpacity>
               
               <TouchableOpacity 
                 style={styles.iconButton}
                 onPress={deleteSetACB(exerciseIndex, setIndex)}
               >
-                <MaterialIcons name="delete" size={22} color="#FF5252" />
+                <MaterialIcons name="delete" size={18} color="#FF5252" />
               </TouchableOpacity>
             </View>
           )}
@@ -568,7 +567,8 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
           style={styles.addButton} 
           onPress={onAddExercise}
         >
-          <Text style={styles.addButtonText}>Create New Session</Text>
+          <MaterialIcons name="fitness-center" size={20} color="white" />
+          <Text style={styles.addButtonText}>Create Session</Text>
         </TouchableOpacity>
       </View>
     );
@@ -581,7 +581,7 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
     <View style={styles.container}>
       {error && <Text style={styles.errorText}>{error}</Text>}
       
-      <View style={styles.header}>
+      <View style={styles.headerRow}>
         {!workoutStarted ? (
           // Editable text input when not started
           <TextInput
@@ -594,12 +594,11 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
           // Display as text only when workout started
           <Text style={styles.sessionNameText}>{sessionName}</Text>
         )}
-      </View>
-      
-      {/* Timer Section - just display */}
-      <View style={styles.timerContainer}>
-        <Text style={styles.timerLabel}>Workout Time</Text>
-        <Text style={styles.timerDisplay}>{formatTimeCB(timerSeconds)}</Text>
+        
+        {/* Compact Timer */}
+        <View style={styles.timerContainer}>
+          <Text style={styles.timerDisplay}>{formatTimeCB(timerSeconds)}</Text>
+        </View>
       </View>
       
       <View style={styles.progressContainer}>
@@ -620,7 +619,8 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
               style={styles.markCompleteButton}
               onPress={markWorkoutCompleteACB}
             >
-              <Text style={styles.markCompleteButtonText}>Mark 100% Complete</Text>
+              <MaterialIcons name="done-all" size={14} color="#555" />
+              <Text style={styles.markCompleteButtonText}>100%</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -639,25 +639,25 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         )}
       </ScrollView>
       
-      {/* Bottom buttons */}
-      <View style={styles.bottomButtonsContainer}>
+      {/* Bottom action bar */}
+      <View style={styles.actionBar}>
         {!workoutStarted && (
           <TouchableOpacity 
-            style={styles.addButton} 
+            style={styles.actionButton}
             onPress={onAddExercise}
           >
-            <MaterialIcons name="fitness-center" size={22} color="white" style={styles.buttonIcon} />
-            <Text style={styles.addButtonText}>Add Exercise</Text>
+            <MaterialIcons name="fitness-center" size={24} color="#6C63FF" />
+            <Text style={styles.actionButtonText}>Add</Text>
           </TouchableOpacity>
         )}
 
         {!workoutStarted && hasExercises ? (
           <TouchableOpacity 
-            style={styles.startButton} 
+            style={[styles.actionButton, styles.startActionButton]}
             onPress={startWorkoutACB}
           >
-            <MaterialIcons name="play-arrow" size={22} color="white" style={styles.buttonIcon} />
-            <Text style={styles.startButtonText}>Start Training Session</Text>
+            <MaterialIcons name="play-arrow" size={24} color="#4CAF50" />
+            <Text style={[styles.actionButtonText, styles.startActionButtonText]}>Start</Text>
           </TouchableOpacity>
         ) : null}
         
@@ -665,11 +665,11 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         {workoutStarted && (
           <Link href="/report" asChild>
             <TouchableOpacity 
-              style={styles.finishButton}
+              style={[styles.actionButton, styles.finishActionButton]}
               onPress={finishWorkoutACB}
             >
-              <MaterialIcons name="check-circle" size={22} color="white" style={styles.buttonIcon} />
-              <Text style={styles.finishButtonText}>Finish Workout</Text>
+              <MaterialIcons name="check-circle" size={24} color="#FF6B6B" />
+              <Text style={[styles.actionButtonText, styles.finishActionButtonText]}>Finish</Text>
             </TouchableOpacity>
           </Link>
         )}
@@ -734,15 +734,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f7',
-    padding: 16,
+    padding: 12,
   },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   sessionNameInput: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     padding: 8,
     backgroundColor: 'white',
@@ -750,42 +751,37 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   sessionNameText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    padding: 8,
+    flex: 1,
   },
-  // Timer styles
+  // Compact timer styles
   timerContainer: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 6,
+    padding: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  timerLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
+    shadowRadius: 2,
+    elevation: 1,
   },
   timerDisplay: {
-    fontSize: 40,
+    fontSize: 18,
     fontWeight: 'bold',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     color: '#333',
   },
   progressContainer: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   progressBarBackground: {
-    height: 12,
+    height: 8,
     backgroundColor: '#e0e0e0',
-    borderRadius: 6,
+    borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 4,
   },
@@ -799,18 +795,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
   },
   markCompleteButton: {
     backgroundColor: '#f0f0f0',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   markCompleteButtonText: {
     fontSize: 12,
     color: '#555',
+    marginLeft: 4,
   },
   exercisesContainer: {
     flex: 1,
@@ -821,7 +820,7 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   emptyStateText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#666',
     marginBottom: 8,
@@ -833,62 +832,56 @@ const styles = StyleSheet.create({
   },
   exerciseCard: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 2,
+    elevation: 1,
   },
   exerciseName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   targetMuscleContainer: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   targetMuscleLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
   },
   targetMuscleValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#6C63FF',
   },
   setsContainer: {
-    marginTop: 8,
+    marginTop: 6,
   },
   setsHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   setsHeader: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   addSetButton: {
     backgroundColor: '#6C63FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-    flexDirection: 'row',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  addSetButtonText: {
-    color: 'white',
-    fontWeight: '500',
-    fontSize: 12,
-    marginLeft: 4,
-  },
   setItemContainer: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   setRow: {
     flexDirection: 'row',
@@ -899,92 +892,78 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: '#f5f5f7',
-    padding: 12,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 6,
     flex: 1,
   },
   completedSetItem: {
     backgroundColor: '#e0f7e0',
-    borderLeftWidth: 4,
+    borderLeftWidth: 3,
     borderLeftColor: '#4CAF50',
   },
   setNumber: {
     fontWeight: '500',
+    fontSize: 14,
   },
   setDetails: {
     color: '#666',
+    fontSize: 14,
   },
   setActionButtons: {
     flexDirection: 'row',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   iconButton: {
-    width: 36,
-    height: 36,
+    width: 30,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 15,
     marginLeft: 4,
     backgroundColor: '#f0f0f0',
   },
   noSetsText: {
     fontStyle: 'italic',
     color: '#999',
+    fontSize: 12,
     marginTop: 4,
   },
-  // Bottom Buttons
-  bottomButtonsContainer: {
-    marginTop: 16,
-  },
-  buttonIcon: {
-    marginRight: 8,
-  },
-  addButton: {
-    backgroundColor: '#6C63FF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
+  // Action Bar
+  actionBar: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-around',
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingTop: 12,
   },
-  addButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  startButton: {
-    backgroundColor: '#4CAF50',
-    padding: 16,
-    borderRadius: 8,
+  actionButton: {
     alignItems: 'center',
-    marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  startButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  actionButtonText: {
+    fontSize: 12,
+    marginTop: 4,
+    color: '#6C63FF',
+    fontWeight: '500',
   },
-  finishButton: {
-    backgroundColor: '#FF6B6B',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
+  startActionButton: {
+    // No background, just icons and text
   },
-  finishButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-    textAlign: 'center',
+  startActionButtonText: {
+    color: '#4CAF50',
+  },
+  finishActionButton: {
+    // No background, just icons and text
+  },
+  finishActionButtonText: {
+    color: '#FF6B6B',
   },
   errorText: {
     color: 'red',
-    marginBottom: 16,
-    fontSize: 16,
+    marginBottom: 12,
+    fontSize: 14,
     textAlign: 'center',
   },
   // Modal styles
@@ -996,9 +975,9 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    width: '80%',
+    borderRadius: 10,
+    padding: 16,
+    width: '85%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -1006,24 +985,24 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 12,
     color: '#333',
     textAlign: 'center',
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#555',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   modalInput: {
     backgroundColor: '#f5f5f7',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 6,
+    padding: 10,
     fontSize: 16,
   },
   modalButtons: {
@@ -1032,11 +1011,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   modalButton: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 6,
     flex: 1,
-    marginHorizontal: 8,
+    marginHorizontal: 6,
     alignItems: 'center',
   },
   cancelButton: {
@@ -1052,5 +1031,20 @@ const styles = StyleSheet.create({
   saveModalButtonText: {
     color: 'white',
     fontWeight: '500',
+  },
+  // Add button styles
+  addButton: {
+    backgroundColor: '#6C63FF',
+    padding: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginLeft: 8,
   },
 });
