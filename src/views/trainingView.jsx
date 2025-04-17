@@ -325,7 +325,6 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
   // Delete a set (curried function)
   function deleteSetACB(exerciseIndex, setIndex) {
     return function() {
-      // Create a deep copy of the session to properly trigger updates
       const updatedSession = JSON.parse(JSON.stringify(session));
       const exercise = updatedSession.exercisesList[exerciseIndex];
       
@@ -337,9 +336,44 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         exercise.completedSets = exercise.sets.length;
       }
       
-      // Save changes
-      if (onSave) {
-        onSave(updatedSession);
+      // Check if there are no sets left after deletion
+      if (!Array.isArray(exercise.sets) || exercise.sets.length === 0) {
+        // Ask user if they want to remove the exercise
+        Alert.alert(
+          "Remove Exercise?",
+          `${exercise.name} has no sets left. Do you want to remove this exercise?`,
+          [
+            {
+              text: "Keep Exercise",
+              style: "cancel",
+              onPress: () => {
+                // Just save the session with empty sets
+                if (onSave) {
+                  onSave(updatedSession);
+                }
+              }
+            },
+            {
+              text: "Remove Exercise",
+              style: "destructive",
+              onPress: () => {
+                // Remove the exercise from the list
+                updatedSession.exercisesList.splice(exerciseIndex, 1);
+                
+                // Save changes
+                if (onSave) {
+                  onSave(updatedSession);
+                }
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      } else {
+        // There are still sets left, just save the changes
+        if (onSave) {
+          onSave(updatedSession);
+        }
       }
     };
   }
@@ -565,10 +599,22 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
         <Text style={styles.errorText}>No training session selected.</Text>
         <TouchableOpacity 
           style={styles.addButton} 
-          onPress={onAddExercise}
+          onPress={() => {
+            try {
+              console.log("Navigating to home to create new session");
+              router.push('/'); // Navigate to home/root route
+            } catch (error) {
+              console.error("Navigation error:", error);
+              // Fallback if direct navigation fails
+              Alert.alert(
+                "Navigation Failed",
+                "Please go to the home screen and create a new session."
+              );
+            }
+          }}
         >
           <MaterialIcons name="fitness-center" size={20} color="white" />
-          <Text style={styles.addButtonText}>Create Session</Text>
+          <Text style={styles.addButtonText}>Create New Session</Text>
         </TouchableOpacity>
       </View>
     );
