@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Link } from 'expo-router';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export function TrainingView({ session, onAddExercise, onSave, error, getCurrentSession }) {
   // Component State - simplified sessionName state initialization
@@ -95,7 +96,8 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
                 style={styles.addSetButton}
                 onPress={addSetACB(exerciseIndex)}
               >
-                <Text style={styles.addSetButtonText}>+ Add Set</Text>
+                <MaterialIcons name="add-circle" size={16} color="white" />
+                <Text style={styles.addSetButtonText}>Add Set</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -114,38 +116,40 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
   function setToComponentCB(set, setIndex, exerciseIndex, exercise) {
     return (
       <View key={setIndex} style={styles.setItemContainer}>
-        <TouchableOpacity
-          style={[
-            styles.setItem,
-            (exercise.completedSets || 0) > setIndex && styles.completedSetItem
-          ]}
-          onPress={toggleSetCompletionACB(exerciseIndex, setIndex)}
-          disabled={!workoutStarted} // Only disabled when workout is NOT started
-        >
-          <Text style={styles.setNumber}>Set {setIndex + 1}</Text>
-          <Text style={styles.setDetails}>
-            {set.weight > 0 ? `${set.weight} kg × ` : ''}{set.reps} reps
-          </Text>
-        </TouchableOpacity>
-        
-        {/* Edit and Delete buttons - only shown when workout has not started */}
-        {!workoutStarted && (
-          <View style={styles.setActions}>
-            <TouchableOpacity 
-              style={styles.setActionButton}
-              onPress={openEditSetModalACB(exerciseIndex, setIndex)}
-            >
-              <Text style={styles.setActionButtonText}>Edit</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.setActionButton, styles.deleteButton]}
-              onPress={deleteSetACB(exerciseIndex, setIndex)}
-            >
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <View style={styles.setRow}>
+          <TouchableOpacity
+            style={[
+              styles.setItem,
+              (exercise.completedSets || 0) > setIndex && styles.completedSetItem
+            ]}
+            onPress={toggleSetCompletionACB(exerciseIndex, setIndex)}
+            disabled={!workoutStarted}
+          >
+            <Text style={styles.setNumber}>Set {setIndex + 1}</Text>
+            <Text style={styles.setDetails}>
+              {set.weight > 0 ? `${set.weight} kg × ` : ''}{set.reps} reps
+            </Text>
+          </TouchableOpacity>
+          
+          {/* Edit and Delete buttons - only shown when workout has not started */}
+          {!workoutStarted && (
+            <View style={styles.setActionButtons}>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={openEditSetModalACB(exerciseIndex, setIndex)}
+              >
+                <MaterialIcons name="edit" size={22} color="#6C63FF" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={deleteSetACB(exerciseIndex, setIndex)}
+              >
+                <MaterialIcons name="delete" size={22} color="#FF5252" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
     );
   }
@@ -642,15 +646,17 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
             style={styles.addButton} 
             onPress={onAddExercise}
           >
+            <MaterialIcons name="fitness-center" size={22} color="white" style={styles.buttonIcon} />
             <Text style={styles.addButtonText}>Add Exercise</Text>
           </TouchableOpacity>
         )}
-        
+
         {!workoutStarted && hasExercises ? (
           <TouchableOpacity 
             style={styles.startButton} 
             onPress={startWorkoutACB}
           >
+            <MaterialIcons name="play-arrow" size={22} color="white" style={styles.buttonIcon} />
             <Text style={styles.startButtonText}>Start Training Session</Text>
           </TouchableOpacity>
         ) : null}
@@ -662,6 +668,7 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
               style={styles.finishButton}
               onPress={finishWorkoutACB}
             >
+              <MaterialIcons name="check-circle" size={22} color="white" style={styles.buttonIcon} />
               <Text style={styles.finishButtonText}>Finish Workout</Text>
             </TouchableOpacity>
           </Link>
@@ -871,14 +878,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   addSetButtonText: {
     color: 'white',
     fontWeight: '500',
     fontSize: 12,
+    marginLeft: 4,
   },
   setItemContainer: {
     marginBottom: 8,
+  },
+  setRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   setItem: {
     flexDirection: 'row',
@@ -886,6 +901,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f7',
     padding: 12,
     borderRadius: 8,
+    flex: 1,
   },
   completedSetItem: {
     backgroundColor: '#e0f7e0',
@@ -898,28 +914,18 @@ const styles = StyleSheet.create({
   setDetails: {
     color: '#666',
   },
-  setActions: {
+  setActionButtons: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingTop: 4,
-  },
-  setActionButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     marginLeft: 8,
-    borderRadius: 4,
+  },
+  iconButton: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 18,
+    marginLeft: 4,
     backgroundColor: '#f0f0f0',
-  },
-  setActionButtonText: {
-    fontSize: 12,
-    color: '#555',
-  },
-  deleteButton: {
-    backgroundColor: '#ffebee',
-  },
-  deleteButtonText: {
-    color: '#d32f2f',
-    fontSize: 12,
   },
   noSetsText: {
     fontStyle: 'italic',
@@ -930,12 +936,17 @@ const styles = StyleSheet.create({
   bottomButtonsContainer: {
     marginTop: 16,
   },
+  buttonIcon: {
+    marginRight: 8,
+  },
   addButton: {
     backgroundColor: '#6C63FF',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   addButtonText: {
     color: 'white',
@@ -948,6 +959,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   startButtonText: {
     color: 'white',
@@ -959,12 +972,14 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   finishButtonText: {
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
-    textAlign: 'center', // Ensure text is centered
+    textAlign: 'center',
   },
   errorText: {
     color: 'red',
