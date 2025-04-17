@@ -13,6 +13,7 @@ export function HomeView(props) {
        handleCancelSessionName,
        newSessionName,
        setNewSessionName,
+       handleDeleteSession,
        } 
        = props;
 
@@ -38,7 +39,16 @@ export function HomeView(props) {
             style={styles.sessionItem}
             onPress={() => handleSessionPress(item.id)}
         >
-            <Text style={styles.sessionTitle}>{item.name}</Text>
+            <View style={styles.sessionHeader}>
+                <Text style={styles.sessionTitle}>{item.name}</Text>
+                <TouchableOpacity 
+                    style={styles.deleteButton}
+                    onPress={() => handleDeleteSession(item.id)}
+                >
+                    <Text style={styles.deleteButtonText}>X</Text>
+                </TouchableOpacity>
+            </View>
+            
             <Text style={styles.exerciseCount}>
                 {item.exerciseCount} exercise{item.exerciseCount !== 1 ? 's' : ''}
             </Text>
@@ -53,10 +63,10 @@ export function HomeView(props) {
                     </View>
                 ))}
             </View>
-            
-            <View style={styles.badgeContainer}>
+
+            {/* <View style={styles.badgeContainer}>
                 <Text style={styles.badge}>{item.name.split(' ')[0][0]}</Text>
-            </View>
+            </View> */}
         </TouchableOpacity>
     );
 
@@ -141,11 +151,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     position: 'relative',
   },
+  sessionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   sessionTitle: {
     fontSize: 18,
     fontWeight: '800',
     color: '#333',
-    marginBottom: 4,
+    flex: 1,
   },
   exerciseCount: {
     fontSize: 14,
@@ -186,6 +202,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
 },
+  deleteButton: {
+    backgroundColor: 'white',
+    borderRadius: 50,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginLeft: 10,
+  },
+  deleteButtonText: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   addButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
@@ -251,5 +279,4 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
-  
 });

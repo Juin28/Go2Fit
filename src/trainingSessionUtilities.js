@@ -1,6 +1,5 @@
-
 import {FIREBASE_DB} from './firestoreModel'
-import { collection, doc, setDoc, getDoc, addDoc, query, where,getDocs} from 'firebase/firestore'
+import { collection, doc, setDoc, getDoc, addDoc, query, where,getDocs, deleteDoc} from 'firebase/firestore'
 
 
 // The training sessions is saved in this way:
@@ -104,3 +103,28 @@ export async function getUserSessions(userId) {
             throw error;
         }
     }
+
+export async function deleteSession(userId, sessionId) {
+    try {
+        console.log(`Deleting session ${sessionId} for user ${userId}`);
+        const sessionRef = doc(FIREBASE_DB, "sessions", sessionId);
+        
+        // Check if session exists and belongs to the user
+        const docSnap = await getDoc(sessionRef);
+        if (!docSnap.exists()) {
+            throw new Error("Session not found with id: " + sessionId);
+        }
+        
+        const sessionData = docSnap.data();
+        if (sessionData.userId !== userId) {
+            throw new Error("Unauthorized: Session belongs to a different user");
+        }
+        
+        // Delete the document
+        await deleteDoc(sessionRef);
+        console.log(`Successfully deleted session ${sessionId}`);
+    } catch (error) {
+        console.error("Error deleting session:", error);
+        throw error;
+    }
+}
