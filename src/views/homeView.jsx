@@ -108,7 +108,7 @@ export function HomeView(props) {
                             style={styles.modalInput}
                             value={newSessionName}
                             onChangeText={setNewSessionName}
-                            placeholder="Core Strength Session"
+                            placeholder="e.g. Core Strength Session"
                             placeholderTextColor="#666"
                             autoFocus={true}
                         />
@@ -238,20 +238,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 20,
+    padding: 10,
   },
   modalContent: {
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 20,
-    width: '60%',
+    width: '65%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
+    textAlign: 'center',
   },
   modalInput: {
     width: '100%',
@@ -265,26 +266,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+    marginTop: 10,
   },
   modalConfirmButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
+    padding: 10,
+    flex: 1,
+    marginRight: 2.5,
   },
   modalConfirmButtonDisabled: {
     backgroundColor: '#ccc',
   },
   modalButtonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
   modalCancelButton: {
     backgroundColor: '#F16767',
     borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
+    padding: 10,
+    flex: 1,
+    marginLeft: 2.5,
   },
   emptyStateContainer: {
     flex:1,

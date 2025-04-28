@@ -112,6 +112,7 @@ export const Home = observer(function HomeRender(props) {
             Alert.alert("Error", "Failed to create new session");
         } finally {
             setLoading(false);
+            setNewSessionName("");
         }
     }
     
