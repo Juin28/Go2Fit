@@ -1,4 +1,4 @@
-import { Text, View } from "react-native"
+import { Text, View, StyleSheet } from "react-native"
 import { Tabs } from "expo-router"
 import { observer } from "mobx-react-lite"
 import { reactiveModel } from "../bootstrapping"
@@ -6,8 +6,8 @@ import { SuspenseView } from "../views/suspenseView"
 
 // Function to render tab icons properly
 const renderTabIcon = (emoji) => () => (
-  <View style={{ alignItems: "center", justifyContent: "center" }}>
-    <Text style={{ fontSize: 20 }}>{emoji}</Text>
+  <View style={styles.tabIconContainer}>
+    <Text style={styles.tabIconText}>{emoji}</Text>
   </View>
 )
 
@@ -18,8 +18,8 @@ export default observer(function RootLayout() {
         <Tabs
           screenOptions={{
             headerShown: false,
-            tabBarLabelStyle: { fontSize: 14 },
-            tabBarStyle: {  height: 70, paddingBottom: 10, paddingLeft:10, paddingRight:10 },
+            tabBarLabelStyle: styles.tabBarLabel,
+            tabBarStyle: styles.tabBar,
           }}
         >
           <Tabs.Screen
@@ -67,4 +67,47 @@ export default observer(function RootLayout() {
       )}
     </>
   )
+})
+
+const styles = StyleSheet.create({
+  tabBar: {
+    height: 65,
+    marginLeft: 10,
+    marginRight: 10,
+    paddingLeft: 10,
+    paddingRight: 10,
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: 40,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    position: 'absolute',
+    bottom: 15,
+    left: 20,
+    right: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    paddingTop: 2,
+    paddingBottom: 2,
+  },
+  tabBarLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 0,
+    paddingBottom: 2,
+  },
+  tabIconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 0,
+    paddingTop: 2,
+  },
+  tabIconText: {
+    fontSize: 20,
+  },
 })
