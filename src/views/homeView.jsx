@@ -14,7 +14,8 @@ export function HomeView(props) {
        newSessionName,
        setNewSessionName,
        handleDeleteSession,
-       } 
+       isAuthenticated,
+       handleLogin,}
        = props;
 
     //For later use when we integrate with firebase
@@ -74,18 +75,33 @@ export function HomeView(props) {
         <View style={styles.container}>
             <Text style={styles.screenTitle}>HOME</Text>
             
-            {(!trainingSessions || trainingSessions.length === 0) ? (
+            {!isAuthenticated && trainingSessions.length === 0 ? (
                 <View style={styles.emptyStateContainer}>
-                    <Text style={styles.emptyStateText}>No sessions yet</Text>
-                    <Text style={styles.emptyStateSubtext}>Create a new session to get started</Text>
+                    <Text style={styles.emptyStateText}>Please login to continue</Text>
+                    <Text style={styles.emptyStateSubtext}>Your sessions will not be saved until you login</Text>
+                    <TouchableOpacity
+                        style={styles.loginButton}
+                        onPress={()=>handleLogin()}
+                    >
+                        <Text style={styles.loginButtonText}>Login</Text>
+                    </TouchableOpacity>
                 </View>
             ) : (
-                <FlatList
-                    data={trainingSessions}
-                    renderItem={renderSessionItem}
-                    keyExtractor={item => item.id}
-                    contentContainerStyle={styles.listContainer}
-                />
+                <>
+                    {(!trainingSessions || trainingSessions.length === 0) ? (
+                        <View style={styles.emptyStateContainer}>
+                            <Text style={styles.emptyStateText}>No sessions yet</Text>
+                            <Text style={styles.emptyStateSubtext}>Create a new session to get started</Text>
+                        </View>
+                    ) : (
+                        <FlatList
+                            data={trainingSessions}
+                            renderItem={renderSessionItem}
+                            keyExtractor={item => item.id}
+                            contentContainerStyle={styles.listContainer}
+                        />
+                    )}
+                </>
             )}
             
             <TouchableOpacity 
@@ -306,5 +322,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 10,
+    textAlign: 'center',
+  },
+  loginButton: {
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 122, 255, 0.3)',
+  },
+  loginButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   }
 });

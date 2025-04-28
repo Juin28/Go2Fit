@@ -161,6 +161,9 @@ export const Home = observer(function HomeRender(props) {
         );
     };
 
+    const handleLoginACB = () => {
+        navigation.navigate('index');
+    }
     // Prepare training sessions with exerciseCount property
     const sessionsWithExerciseCount = model.trainingSessions.map(session => ({
         ...session,
@@ -180,6 +183,8 @@ export const Home = observer(function HomeRender(props) {
             handleDeleteSession={handleDeleteSessionACB}
             setNewSessionName={setNewSessionName}
             newSessionName={newSessionName}
+            isAuthenticated={model.isAuthenticated}
+            handleLogin={handleLoginACB}
         />
     )
 })

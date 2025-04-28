@@ -1,12 +1,12 @@
 import { View, StyleSheet } from "react-native"
 import { observer } from "mobx-react-lite"
 import { reactiveModel } from "../bootstrapping"
-import { Exercises } from "../presenters/exercisesPresenter"
+import { Home } from "../presenters/homePresenter"
 
-export default observer(function ExercisesPage() {
+export default observer(function HomePage() {
   return (
     <View style={styles.container}>
-      <Exercises model={reactiveModel}></Exercises>
+      <Home model={reactiveModel}></Home>
     </View>
   )
 })
