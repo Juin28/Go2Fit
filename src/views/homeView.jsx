@@ -72,50 +72,21 @@ export function HomeView(props) {
 
     return (
         <View style={styles.container}>
-          <Modal
-            visible={sessionNameModalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={()=>handleCancelSessionName()}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Enter Session Name</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={newSessionName}
-                onChangeText={setNewSessionName}
-                placeholder="Core Strength Session"
-                placeholderTextColor="#666"
-                autoFocus={true}
-                />
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity
-                    style={[styles.modalConfirmButton, newSessionName.length === 0 && styles.modalConfirmButtonDisabled]}
-                    onPress={handleConfirmSessionName}
-                    disabled={newSessionName.length === 0 }
-                  >
-                    <Text style={styles.modalButtonText}>Confirm</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={styles.modalCancelButton}
-                    onPress={handleCancelSessionName}
-                  >
-                    <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            </View>
-          </Modal>
-
             <Text style={styles.screenTitle}>HOME</Text>
             
-            <FlatList
-                data={trainingSessions}
-                renderItem={renderSessionItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.listContainer}
-            />
+            {(!trainingSessions || trainingSessions.length === 0) ? (
+                <View style={styles.emptyStateContainer}>
+                    <Text style={styles.emptyStateText}>No sessions yet</Text>
+                    <Text style={styles.emptyStateSubtext}>Create a new session to get started</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={trainingSessions}
+                    renderItem={renderSessionItem}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.listContainer}
+                />
+            )}
             
             <TouchableOpacity 
                 style={styles.addButton}
@@ -123,6 +94,42 @@ export function HomeView(props) {
             >
                 <Text style={styles.addButtonText}>+ NEW</Text>
             </TouchableOpacity>
+
+            <Modal
+                visible={sessionNameModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={()=>handleCancelSessionName()}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Enter Session Name</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            value={newSessionName}
+                            onChangeText={setNewSessionName}
+                            placeholder="Core Strength Session"
+                            placeholderTextColor="#666"
+                            autoFocus={true}
+                        />
+                        <View style={styles.modalButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalConfirmButton, newSessionName.length === 0 && styles.modalConfirmButtonDisabled]}
+                                onPress={handleConfirmSessionName}
+                                disabled={newSessionName.length === 0 }
+                            >
+                                <Text style={styles.modalButtonText}>Confirm</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.modalCancelButton}
+                                onPress={handleCancelSessionName}
+                            >
+                                <Text style={styles.modalButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -279,4 +286,18 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
+  emptyStateContainer: {
+    flex:1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  emptyStateSubtext: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+  }
 });
