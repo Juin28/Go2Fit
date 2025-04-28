@@ -210,15 +210,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
 },
   deleteButton: {
-    backgroundColor: 'white',
-    borderRadius: 50,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(250, 18, 18, 0.1)',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     marginLeft: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(250, 18, 18, 0.3)',
   },
   deleteButtonText: {
-    color: 'black',
-    fontSize: 16,
+    color: 'rgba(250, 18, 18, 0.8)',
+    fontSize: 14,
     fontWeight: '600',
   },
   addButton: {
