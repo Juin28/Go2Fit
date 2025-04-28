@@ -13,6 +13,7 @@ export function HomeView(props) {
        handleCancelSessionName,
        newSessionName,
        setNewSessionName,
+       handleDeleteSession,
        } 
        = props;
 
@@ -38,7 +39,16 @@ export function HomeView(props) {
             style={styles.sessionItem}
             onPress={() => handleSessionPress(item.id)}
         >
-            <Text style={styles.sessionTitle}>{item.name}</Text>
+            <View style={styles.sessionHeader}>
+                <Text style={styles.sessionTitle}>{item.name}</Text>
+                <TouchableOpacity 
+                    style={styles.deleteButton}
+                    onPress={() => handleDeleteSession(item.id)}
+                >
+                    <Text style={styles.deleteButtonText}>X</Text>
+                </TouchableOpacity>
+            </View>
+            
             <Text style={styles.exerciseCount}>
                 {item.exerciseCount} exercise{item.exerciseCount !== 1 ? 's' : ''}
             </Text>
@@ -53,59 +63,30 @@ export function HomeView(props) {
                     </View>
                 ))}
             </View>
-            
-            <View style={styles.badgeContainer}>
+
+            {/* <View style={styles.badgeContainer}>
                 <Text style={styles.badge}>{item.name.split(' ')[0][0]}</Text>
-            </View>
+            </View> */}
         </TouchableOpacity>
     );
 
     return (
         <View style={styles.container}>
-          <Modal
-            visible={sessionNameModalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={()=>handleCancelSessionName()}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Enter Session Name</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={newSessionName}
-                onChangeText={setNewSessionName}
-                placeholder="Core Strength Session"
-                placeholderTextColor="#666"
-                autoFocus={true}
-                />
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity
-                    style={[styles.modalConfirmButton, newSessionName.length === 0 && styles.modalConfirmButtonDisabled]}
-                    onPress={handleConfirmSessionName}
-                    disabled={newSessionName.length === 0 }
-                  >
-                    <Text style={styles.modalButtonText}>Confirm</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={styles.modalCancelButton}
-                    onPress={handleCancelSessionName}
-                  >
-                    <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            </View>
-          </Modal>
-
             <Text style={styles.screenTitle}>HOME</Text>
             
-            <FlatList
-                data={trainingSessions}
-                renderItem={renderSessionItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.listContainer}
-            />
+            {(!trainingSessions || trainingSessions.length === 0) ? (
+                <View style={styles.emptyStateContainer}>
+                    <Text style={styles.emptyStateText}>No sessions yet</Text>
+                    <Text style={styles.emptyStateSubtext}>Create a new session to get started</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={trainingSessions}
+                    renderItem={renderSessionItem}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.listContainer}
+                />
+            )}
             
             <TouchableOpacity 
                 style={styles.addButton}
@@ -113,6 +94,42 @@ export function HomeView(props) {
             >
                 <Text style={styles.addButtonText}>+ NEW</Text>
             </TouchableOpacity>
+
+            <Modal
+                visible={sessionNameModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={()=>handleCancelSessionName()}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Enter Session Name</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            value={newSessionName}
+                            onChangeText={setNewSessionName}
+                            placeholder="e.g. Core Strength Session"
+                            placeholderTextColor="#666"
+                            autoFocus={true}
+                        />
+                        <View style={styles.modalButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalConfirmButton, newSessionName.length === 0 && styles.modalConfirmButtonDisabled]}
+                                onPress={handleConfirmSessionName}
+                                disabled={newSessionName.length === 0 }
+                            >
+                                <Text style={styles.modalButtonText}>Confirm</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.modalCancelButton}
+                                onPress={handleCancelSessionName}
+                            >
+                                <Text style={styles.modalButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -141,11 +158,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     position: 'relative',
   },
+  sessionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   sessionTitle: {
     fontSize: 18,
     fontWeight: '800',
     color: '#333',
-    marginBottom: 4,
+    flex: 1,
   },
   exerciseCount: {
     fontSize: 14,
@@ -186,6 +209,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
 },
+  deleteButton: {
+    backgroundColor: 'rgba(250, 18, 18, 0.1)',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    marginLeft: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(250, 18, 18, 0.3)',
+  },
+  deleteButtonText: {
+    color: 'rgba(250, 18, 18, 0.8)',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   addButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
@@ -203,20 +240,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 20,
+    padding: 10,
   },
   modalContent: {
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 20,
-    width: '60%',
+    width: '65%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
+    textAlign: 'center',
   },
   modalInput: {
     width: '100%',
@@ -230,26 +268,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+    marginTop: 10,
   },
   modalConfirmButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
+    padding: 10,
+    flex: 1,
+    marginRight: 2.5,
   },
   modalConfirmButtonDisabled: {
     backgroundColor: '#ccc',
   },
   modalButtonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
   modalCancelButton: {
     backgroundColor: '#F16767',
     borderRadius: 8,
-    padding: 16,
+    padding: 10,
+    flex: 1,
+    marginLeft: 2.5,
+  },
+  emptyStateContainer: {
+    flex:1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  
+  emptyStateText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  emptyStateSubtext: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+  }
 });
