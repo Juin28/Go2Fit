@@ -1,12 +1,12 @@
 import { View } from "react-native"
 import { observer } from "mobx-react-lite"
 import { reactiveModel } from "../bootstrapping"
-import { Profile } from "../presenters/profilePresenter"
+import { Home } from "../presenters/homePresenter"
 
-export default observer(function IndexPage() {
+export default observer(function HomePage() {
   return (
       <View style={{ flex: 1 }}>
-        <Profile model={reactiveModel}></Profile>
+        <Home model={reactiveModel}></Home>
       </View>
   )
 })

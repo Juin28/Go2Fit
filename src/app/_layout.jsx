@@ -19,11 +19,11 @@ export default observer(function RootLayout() {
           screenOptions={{
             headerShown: false,
             tabBarLabelStyle: { fontSize: 14 },
-            tabBarStyle: { paddingBottom: 5, height: 60 },
+            tabBarStyle: {  height: 70, paddingBottom: 10, paddingLeft:10, paddingRight:10 },
           }}
         >
           <Tabs.Screen
-            name="index"
+            name="home"
             options={{
               title: "Home",
               tabBarIcon: renderTabIcon("🏠"),
@@ -55,7 +55,7 @@ export default observer(function RootLayout() {
           />
 
           <Tabs.Screen
-            name="profile"
+            name="index"
             options={{
               title: "Me",
               tabBarIcon: renderTabIcon("👤"),
