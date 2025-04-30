@@ -295,7 +295,7 @@ const SCOPE_LABELS = {
   Year: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
 };
 
-const TAB_OPTIONS = ["Day", "Week", "Month", "Year"];
+const TAB_OPTIONS = ["Week", "Month", "Year"];
 
 const getSpecificDate = (tab, offset, index) => {
   const now = dayjs();
@@ -305,9 +305,11 @@ const getSpecificDate = (tab, offset, index) => {
   }
 
   if (tab === "Week") {
-    const date = now.subtract(offset * 7, "day").subtract(6 - index, "day").startOf("day");
-    return date.format("YYYY-MM-DD");
+    const startOfWeek = now.subtract(offset * 7, "day").startOf("week").add(1, "day"); 
+    return startOfWeek.add(index, "day").format("YYYY-MM-DD");
   }
+
+  
 
   if (tab === "Month") {
     return now.subtract(offset, "month").subtract(29 - index, "day").format("YYYY-MM-DD");
@@ -453,7 +455,7 @@ export function ReportView({ chartData, setsData, volumeData, summaryStats, load
               <>
                 <Text style={styles.modalTitle}>{labels[selectedIndex] || `#${selectedIndex + 1}`}</Text>
                 <Text style={styles.modalText}>time: {data[selectedIndex]} min</Text>
-                <Text style={styles.modalText}>sets: {sets[selectedIndex]}</Text>
+                {/* <Text style={styles.modalText}>sets: {sets[selectedIndex]}</Text> */}
                 <Text style={styles.modalText}>volume: {volumes[selectedIndex]} kg</Text>
                 <Text style={[styles.modalText, { marginTop: 10 }]}>date: {selectedKey}</Text>
                 {selectedDetail?.length > 0 ? (
@@ -473,7 +475,9 @@ export function ReportView({ chartData, setsData, volumeData, summaryStats, load
       </Modal>
 
       <View style={styles.todayCard}>
-        <Text style={styles.todayLabel}>{getDateRangeLabel(activeTab, 0)} workout time</Text>
+        {/* <Text style={styles.todayLabel}>{getDateRangeLabel(activeTab, 0)} workout time</Text> */}
+        <Text style={styles.todayLabel}>workout time for this {activeTab.toLowerCase()}</Text>
+
         <Text style={styles.todayValue}>{todayValue} min</Text>
       </View>
     </ScrollView>
