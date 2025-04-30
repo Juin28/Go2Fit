@@ -83,13 +83,8 @@ export const model = {
       }
       console.log("New session created:", newSession)
       
-      // Check if trainingSessions exists
-      if (!Array.isArray(this.trainingSessions)) {
-        console.error("trainingSessions is not an array, initializing as empty array")
-        this.trainingSessions = []
-      }
-      
-      this.trainingSessions.push(newSession)
+      // Create a new array with the new session
+      this.trainingSessions = [...this.trainingSessions, newSession]
       console.log("New session added, total sessions:", this.trainingSessions.length)
       this.currentTrainingSessionID = newId
       console.log("Current training session ID set to:", newId)
@@ -98,23 +93,17 @@ export const model = {
     console.log("Looking for current session with ID:", this.currentTrainingSessionID)
     
     // Find the current session
-    const currentSession = this.trainingSessions.find(
+    const currentSessionIndex = this.trainingSessions.findIndex(
       s => s.id.toString() === this.currentTrainingSessionID.toString()
     )
     
-    console.log("Current session found:", currentSession ? "Yes" : "No")
+    console.log("Current session found:", currentSessionIndex !== -1 ? "Yes" : "No")
     
-    if (currentSession) {
-      // Ensure exercisesList exists
-      if (!Array.isArray(currentSession.exercisesList)) {
-        console.log("No exercisesList found, creating empty array")
-        currentSession.exercisesList = []
-      }
-      
-      console.log("Current exercisesList length:", currentSession.exercisesList.length)
+    if (currentSessionIndex !== -1) {
+      const currentSession = this.trainingSessions[currentSessionIndex]
       
       // Check if exercise exists by name
-      const exerciseExists = currentSession.exercisesList.some(
+      const exerciseExists = currentSession.exercisesList?.some(
         ex => ex.name === exercise.name
       )
       
@@ -136,8 +125,16 @@ export const model = {
         console.log("New exercise object created:", newExercise)
         
         try {
-          currentSession.exercisesList.push(newExercise)
-          console.log("Exercise added successfully, new list length:", currentSession.exercisesList.length)
+          // Create a new array with the updated session
+          const updatedSessions = [...this.trainingSessions]
+          updatedSessions[currentSessionIndex] = {
+            ...currentSession,
+            exercisesList: [...(currentSession.exercisesList || []), newExercise]
+          }
+          
+          // Update the training sessions array
+          this.trainingSessions = updatedSessions
+          console.log("Exercise added successfully, new list length:", updatedSessions[currentSessionIndex].exercisesList.length)
         } catch (error) {
           console.error("Error adding exercise to list:", error)
           throw error

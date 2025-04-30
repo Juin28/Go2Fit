@@ -30,7 +30,7 @@ export function ExercisesView(props) {
   const [selectedEquipments, setSelectedEquipments] = useState(['All']);
   const [selectedBodyParts, setSelectedBodyParts] = useState(['All']);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilterSection, setShowFilterSection] = useState(true);
+  const [showFilterSection, setShowFilterSection] = useState(false);
 
   // Loading and API state
   const [isLoading, setIsLoading] = useState(true);

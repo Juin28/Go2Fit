@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { observer } from "mobx-react-lite";
-import { getUserSessions, addNewSessionToFireStore } from '../trainingSessionUtilities';
+import { getUserSessions, addNewSessionToFireStore, deleteSession } from '../trainingSessionUtilities';
 import { FIREBASE_AUTH } from '../firestoreModel';
 import { useNavigation } from '@react-navigation/native';
 import { HomeView } from '../views/homeView';
@@ -112,13 +112,58 @@ export const Home = observer(function HomeRender(props) {
             Alert.alert("Error", "Failed to create new session");
         } finally {
             setLoading(false);
+            setNewSessionName("");
         }
     }
     
     const handleCancelSessionNameACB = () => {
         setSessionNameModalVisible(false);
     }
-    
+
+    const handleDeleteSessionACB = async (sessionId) => {
+        console.log("Deleting session:", sessionId);
+        // Show confirmation dialog
+        Alert.alert(
+            "Delete Session",
+            "Are you sure you want to delete this training session? This action cannot be undone.",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            await deleteSession(model.userId, sessionId);
+                            
+                            // Remove from local state
+                            const updatedSessions = model.trainingSessions.filter(
+                                session => session.id.toString() !== sessionId.toString()
+                            );
+                            model.trainingSessions = updatedSessions;
+                            
+                            // Clear current session if it was the deleted one
+                            if (model.currentTrainingSessionID === sessionId) {
+                                model.setCurrentTrainingSessionID(null);
+                            }
+                        } catch (error) {
+                            console.error("Error deleting session:", error);
+                            Alert.alert("Error", "Failed to delete session");
+                        } finally {
+                            setLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleLoginACB = () => {
+        navigation.navigate('index');
+    }
     // Prepare training sessions with exerciseCount property
     const sessionsWithExerciseCount = model.trainingSessions.map(session => ({
         ...session,
@@ -135,8 +180,11 @@ export const Home = observer(function HomeRender(props) {
             handleAddNewSessionPress={handleAddNewSessionPressACB}
             handleConfirmSessionName={handleConfirmSessionNameACB}
             handleCancelSessionName={handleCancelSessionNameACB}
+            handleDeleteSession={handleDeleteSessionACB}
             setNewSessionName={setNewSessionName}
             newSessionName={newSessionName}
+            isAuthenticated={model.isAuthenticated}
+            handleLogin={handleLoginACB}
         />
     )
 })

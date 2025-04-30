@@ -1,14 +1,19 @@
-import { View } from "react-native"
+import { View, StyleSheet } from "react-native"
 import { observer } from "mobx-react-lite"
 import { reactiveModel } from "../bootstrapping"
-import { Training } from "../presenters/trainingPresenter"
-import { Home } from "../presenters/homePresenter"
+import { Profile } from "../presenters/profilePresenter"
 
 export default observer(function IndexPage() {
   return (
-      <View style={{ flex: 1 }}>
-        {/* <Training model={reactiveModel}></Training> */}
-        <Home model={reactiveModel}></Home>
-      </View>
+    <View style={styles.container}>
+      <Profile model={reactiveModel} />
+    </View>
   )
+})
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingBottom: 90,
+  },
 })
