@@ -1,340 +1,279 @@
-// import React, { useState } from "react"
+// import dayjs  from "dayjs";
+// import React, { useState } from "react";
 // import {
-//   Dimensions,
 //   ScrollView,
-//   StyleSheet,
 //   Text,
 //   View,
 //   Pressable,
-// } from "react-native"
-// import { BarChart } from "react-native-chart-kit"
+//   Dimensions,
+//   StyleSheet,
+//   Modal,
+//   ActivityIndicator,
+// } from "react-native";
+// import { LineChart } from "react-native-chart-kit";
 
-// const { width: screenWidth } = Dimensions.get("window")
+// const { width: screenWidth } = Dimensions.get("window");
 
-// const CHART_DATA = {
-//   Day: [0, 0, 0, 0, 0, 0, 0, 60, 60, 35, 0, 0, 0, 60, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-//   Week: [235, 160, 100, 0, 0, 210, 210],
-//   Month: [300, 240, 200, 180, 250, 220, 280, 310, 55, 30, 190, 270, 300, 240, 200, 180, 250, 220, 280, 310, 55, 30, 220, 280, 310, 55, 30, 190, 270, 300],
-//   Year: [3200, 5120, 7160, 2900, 2300, 4200, 1500, 5120, 7160, 2900, 2300, 4200],
-// }
+// // 定义图表标签
+// const SCOPE_LABELS = {
+//   Day: Array.from({ length: 24 }, (_, i) => (i % 6 === 0 ? i.toString() : "")),
+//   Week: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+//   Month: Array.from({ length: 30 }, (_, i) => ((i + 1) % 6 === 0 ? (i + 1).toString() : "")),
+//   Year: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+// };
 
-// const SCOPE_SIZE = {
-//   Day: 24,
-//   Week: 7,
-//   Month: 30,
-//   Year: 12,
-// }
+// const TAB_OPTIONS = ["Day", "Week", "Month", "Year"];
 
-// const generateSetsAndVolumeFromTime = (chartData) => {
-//   const chartVolume = {}
-//   const chartSets = {}
-
-//   for (const scope in chartData) {
-//     const timeSeries = chartData[scope]
-//     chartVolume[scope] = []
-//     chartSets[scope] = []
-
-//     for (const time of timeSeries) {
-//       if (time === 0) {
-//         chartVolume[scope].push(0)
-//         chartSets[scope].push(0)
-//         continue
-//       }
-
-//       const avgSetDuration = 5
-//       const setsCount = Math.max(1, Math.floor(time / avgSetDuration))
-
-//       let totalVolume = 0
-//       for (let i = 0; i < setsCount; i++) {
-//         const weight = [40, 50, 60, 70][Math.floor(Math.random() * 4)]
-//         const reps = [8, 10, 12][Math.floor(Math.random() * 3)]
-//         totalVolume += weight * reps
-//       }
-
-//       chartVolume[scope].push(totalVolume)
-//       chartSets[scope].push(setsCount)
-//     }
-//   }
-
-//   return { chartVolume, chartSets }
-// }
-
-// const { chartVolume: CHART_VOLUME, chartSets: CHART_SETS } = generateSetsAndVolumeFromTime(CHART_DATA)
-
-// const getWindowedData = (data, offset, size) => {
-//   const start = offset
-//   const end = start + size
-//   const filled = Array(size).fill(0)
-//   const slice = data.slice(start, end)
-//   return [...slice, ...filled].slice(0, size)
-// }
-
-// const getXAxisLabels = (tab, length) => {
-//   let labels = Array(length).fill("")
-//   switch (tab) {
-//     case "Day":
-//       labels[0] = "0"
-//       labels[6] = "6"
-//       labels[12] = "12"
-//       labels[18] = "18"
-//       return labels
-//     case "Week":
-//       return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-//     case "Month":
-//       for (let i = 0; i < length; i += 6) labels[i] = `${i + 1}`
-//       labels[length - 1] = `${length}`
-//       return labels
-//     case "Year":
-//       return ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-//     default:
-//       return Array(length).fill("")
-//   }
-// }
-
+// // 获取日期范围标签
 // const getDateRangeLabel = (tab, offset) => {
-//   const now = new Date()
-//   const formatDate = (d) =>
-//     `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(
-//       d.getDate()
-//     ).padStart(2, "0")}`
+//   const now = new Date();
 
 //   if (tab === "Day") {
-//     const date = new Date(now)
-//     const dayOffset = Math.floor(offset / 24)
-//     date.setDate(date.getDate() - dayOffset)
-//     return formatDate(date)
+//     const target = new Date(now);
+//     target.setDate(now.getDate() - offset);
+//     return target.toISOString().split("T")[0];
 //   }
 
 //   if (tab === "Week") {
-//     const end = new Date(now)
-//     end.setDate(end.getDate() - offset)
-//     const start = new Date(end)
-//     start.setDate(start.getDate() - 6)
-//     return `${formatDate(start)} - ${formatDate(end)}`
+//     const start = new Date(now);
+//     start.setDate(now.getDate() - now.getDay() + 1 - offset * 7); // 周一
+//     const end = new Date(start);
+//     end.setDate(start.getDate() + 6);
+//     return `${start.toISOString().split("T")[0]} - ${end.toISOString().split("T")[0]}`;
 //   }
 
 //   if (tab === "Month") {
-//     const end = new Date(now)
-//     end.setDate(end.getDate() - offset)
-//     const start = new Date(end)
-//     start.setDate(start.getDate() - 29)
-//     return `${formatDate(start)} - ${formatDate(end)}`
+//     const target = new Date(now);
+//     target.setMonth(now.getMonth() - offset);
+//     return `${target.getFullYear()}/${String(target.getMonth() + 1).padStart(2, "0")}`;
 //   }
 
 //   if (tab === "Year") {
-//     const end = new Date(now)
-//     end.setMonth(end.getMonth() - offset)
-//     const start = new Date(end)
-//     start.setMonth(start.getMonth() - 11)
-//     return `${formatDate(start)} - ${formatDate(end)}`
+//     return `${now.getFullYear() - offset}`;
 //   }
 
-//   return ""
-// }
+//   return "";
+// };
 
-// const TAB_OPTIONS = ["Day", "Week", "Month", "Year"]
+// export function ReportView({ chartData, setsData, volumeData, summaryStats, loading }) {
+//   const [activeTab, setActiveTab] = useState("Week");
+//   const [selectedIndex, setSelectedIndex] = useState(null);
+//   const [modalVisible, setModalVisible] = useState(false);
+//   const [offset, setOffset] = useState(0);
 
-// export function ReportView() {
-//   const [activeTab, setActiveTab] = useState("Day")
-//   const [offset, setOffset] = useState(0)
-//   const [selectedBar, setSelectedBar] = useState(null)
+//   // 定义每个标签的数据点数量
+//   const SCOPE_SIZE = {
+//     Day: 24,
+//     Week: 7,
+//     Month: 30,
+//     Year: 12,
+//   };
 
-//   const scopeSize = SCOPE_SIZE[activeTab]
+//   // 窗口化数据函数
+//   const windowedData = (data, offset, size) => {
+//     if (!data || data.length === 0) return Array(size).fill(0);
+    
+//     // 计算起始和结束索引
+//     const start = offset * size;
+//     const end = start + size;
+    
+//     // 获取数据切片
+//     const slicedData = data.slice(start, end);
+    
+//     // 如果需要，用0填充
+//     const paddingLength = Math.max(0, size - slicedData.length);
+//     return slicedData.concat(Array(paddingLength).fill(0));
+//   };
 
-//   const rawData = getWindowedData(CHART_DATA[activeTab], offset, scopeSize)
-//   const setsData = getWindowedData(CHART_SETS[activeTab], offset, scopeSize)
-//   const volumeData = getWindowedData(CHART_VOLUME[activeTab], offset, scopeSize)
+//   if (loading) {
+//     return (
+//       <View style={styles.loadingContainer}>
+//         <ActivityIndicator size="large" color="#3b82f6" />
+//       </View>
+//     );
+//   }
 
-//   const maxVisible = Math.max(...rawData)
-//   const yAnchor = 60
-//   const paddedData = [...rawData]
-//   if (maxVisible < yAnchor) paddedData.push(yAnchor)
+//   // 获取窗口化后的数据
+//   const data = windowedData(chartData[activeTab], offset, SCOPE_SIZE[activeTab]);
+//   const sets = windowedData(setsData[activeTab], offset, SCOPE_SIZE[activeTab]);
+//   const volumes = windowedData(volumeData[activeTab], offset, SCOPE_SIZE[activeTab]);
+  
+//   const labels = SCOPE_LABELS[activeTab];
+//   const chartRangeLabel = getDateRangeLabel(activeTab, offset);
+//   const todayValue = data.reduce((a, b) => a + b, 0);
 
-//   const labels = getXAxisLabels(activeTab, paddedData.length)
-//   const filteredData = paddedData.map((val, index) =>
-//     index === paddedData.length - 1 && val === yAnchor ? null : (val === 0 ? null : val)
-//   )
-//   const barColors = paddedData.map((val, index) =>
-//     index === paddedData.length - 1 && val === yAnchor
-//       ? () => "transparent"
-//       : (val === 0 ? () => "transparent" : () => "#3b82f6")
-//   )
-
-//   const chartData = {
-//     labels,
+//   const chartContent = {
+//     labels: labels,
 //     datasets: [
 //       {
-//         data: filteredData,
-//         colors: barColors,
+//         data: data.length > 0 ? data : [0],
+//         color: () => "#3b82f6",
+//         strokeWidth: 2,
 //       },
 //     ],
-//   }
-
-//   const barCount = chartData.labels.length
-//   const chartWidth = screenWidth - 40
-//   const barWidth = chartWidth / barCount
-//   const barPercentage = Math.min(1, Math.max(0.2, 6 / barCount))
+//   };
 
 //   const chartConfig = {
-//     backgroundGradientFrom: "#ffffff",
-//     backgroundGradientTo: "#ffffff",
+//     backgroundGradientFrom: "#fff",
+//     backgroundGradientTo: "#fff",
 //     decimalPlaces: 0,
-//     barPercentage,
-//     color: () => "#000",
-//     labelColor: () => "#000",
-//     propsForBackgroundLines: {
-//       stroke: "#e3e3e3",
-//       strokeWidth: 1,
+//     color: () => "#3b82f6",
+//     labelColor: () => "#666",
+//     propsForDots: {
+//       r: "4",
+//       strokeWidth: "2",
+//       stroke: "#3b82f6",
+//       fill: "#fff",
 //     },
-//   }
+//     propsForBackgroundLines: {
+//       strokeDasharray: "0",
+//       stroke: "#eee",
+//     },
+//   };
 
-//   const totalWorkouts = CHART_SETS["Year"].reduce((a, b) => a + b, 0)
-//   const totalTime = CHART_DATA["Year"].reduce((a, b) => a + b, 0)
-//   const totalVolume = CHART_VOLUME["Year"].reduce((a, b) => a + b, 0)
-
-//   const infoStats = [
-//     { label: "Workouts", value: totalWorkouts },
-//     { label: "Time(min)", value: totalTime },
-//     { label: "Volume(kg)", value: totalVolume },
-//   ]
-
-//   const todayLabel = "Workout Time for " + {
-//     Day: "Today",
-//     Week: "This Week",
-//     Month: "This Month",
-//     Year: "This Year",
-//   }[activeTab] + " (min)"
-
-//   const todayValue = rawData.reduce((a, b) => a + b, 0)
+//   const handleDataPointClick = ({ index }) => {
+//     setSelectedIndex(index);
+//     setModalVisible(true);
+//   };
 
 //   return (
 //     <ScrollView style={styles.container}>
-//       <Text style={styles.title}>Total</Text>
+//       <Text style={styles.title}>训练报告</Text>
 
-//       <View style={styles.infoRow}>
-//         {infoStats.map(({ label, value }) => (
-//           <View key={label} style={styles.infoCard}>
-//             <Text style={styles.infoLabel}>{label}</Text>
-//             <Text style={styles.infoValue}>{value}</Text>
-//           </View>
-//         ))}
+//       <View style={styles.summaryRow}>
+//         <View style={styles.summaryCard}>
+//           <Text style={styles.summaryLabel}>训练次数</Text>
+//           <Text style={styles.summaryValue}>{summaryStats.workouts}</Text>
+//         </View>
+//         <View style={styles.summaryCard}>
+//           <Text style={styles.summaryLabel}>时间(分钟)</Text>
+//           <Text style={styles.summaryValue}>{summaryStats.time}</Text>
+//         </View>
+//         <View style={styles.summaryCard}>
+//           <Text style={styles.summaryLabel}>重量(kg)</Text>
+//           <Text style={styles.summaryValue}>{summaryStats.volume}</Text>
+//         </View>
 //       </View>
 
 //       <View style={styles.tabContainer}>
-//         {TAB_OPTIONS.map((option) => {
-//           const selected = option === activeTab
-//           return (
-//             <Pressable
-//               key={option}
-//               onPress={() => {
-//                 console.log('masoud')
-//                 setActiveTab(option)
-//                 setOffset(0)
-//                 setSelectedBar(null)
-//               }}
-//               style={[styles.tabButton, selected && styles.activeTabButton]}
-//             >
-//               <Text style={[styles.tabText, selected && styles.activeTabText]}>
-//                 {option}
-//               </Text>
-//             </Pressable>
-//           )
-//         })}
-//       </View>
-
-//       <View style={styles.chartCard}>
-//         <View style={styles.chartHeader}>
-//           <Pressable onPress={() => setOffset((prev) => prev + scopeSize)} style={styles.arrowButton}>
-//             <Text style={styles.arrowText}>←</Text>
-//           </Pressable>
-
-//           <Text style={styles.dateRangeLabel}>
-//             {getDateRangeLabel(activeTab, offset)}
-//           </Text>
-
-//           <Pressable onPress={() => setOffset((prev) => Math.max(0, prev - scopeSize))} style={styles.arrowButton}>
-//             <Text style={styles.arrowText}>→</Text>
-//           </Pressable>
-//         </View>
-
-//         <BarChart
-//           data={chartData}
-//           width={chartWidth}
-//           height={300}
-//           fromZero
-//           showValuesOnTopOfBars={false}
-//           withInnerLines
-//           withHorizontalLabels
-//           withCustomBarColorFromData
-//           flatColor={true}
-//           chartConfig={chartConfig}
-//           verticalLabelRotation={0}
-         
-//           onDataPointClick={({ value, index }) => {
-
-//             if (value === null) return
-//             setSelectedBar({
-//               index,
-//               label: chartData.labels[index],
-//               value,
-//               sets: setsData[index],
-//               volume: volumeData[index],
-//               left: index * barWidth,
-//             })
-//           }}
-//           style={styles.chart}
-//         />
-
-//         <Text style={styles.yAxisLabel}>Time/{"\n"}min</Text>
-
-//         {selectedBar && (
-//           <View style={[styles.tooltipPopup, { left: selectedBar.left + 20 }]} pointerEvents="none">
-//             <Text style={styles.tooltipText}>
-//               {selectedBar.label.trim()}
-//               {"\n"}Time: {selectedBar.value} min
-//               {"\n"}Sets: {selectedBar.sets}
-//               {"\n"}Volume: {selectedBar.volume} kg
+//         {TAB_OPTIONS.map((tab) => (
+//           <Pressable
+//             key={tab}
+//             onPress={() => {
+//               setActiveTab(tab);
+//               setOffset(0);
+//               setSelectedIndex(null);
+//             }}
+//             style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
+//           >
+//             <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+//               {tab}
 //             </Text>
-//           </View>
-//         )}
+//           </Pressable>
+//         ))}
 //       </View>
+
+//       <View style={styles.rangeControl}>
+//         <Pressable onPress={() => setOffset((prev) => prev + 1)} style={styles.arrow}>
+//           <Text style={styles.arrowText}>←</Text>
+//         </Pressable>
+//         <Text style={styles.rangeLabel}>{chartRangeLabel}</Text>
+//         <Pressable 
+//           onPress={() => setOffset((prev) => Math.max(0, prev - 1))} 
+//           style={styles.arrow}
+//         >
+//           <Text style={styles.arrowText}>→</Text>
+//         </Pressable>
+//       </View>
+
+//       {data.length === 0 ? (
+//         <View style={styles.emptyState}>
+//           <Text style={styles.emptyText}>暂无数据</Text>
+//         </View>
+//       ) : (
+//         <View style={styles.chartWrapper}>
+//           <LineChart
+//             data={chartContent}
+//             width={screenWidth - 40}
+//             height={240}
+//             chartConfig={chartConfig}
+//             bezier
+//             fromZero
+//             withInnerLines={false}
+//             withOuterLines={false}
+//             onDataPointClick={handleDataPointClick}
+//             style={styles.chart}
+//           />
+//         </View>
+//       )}
+
+//       <Modal
+//         animationType="fade"
+//         transparent={true}
+//         visible={modalVisible}
+//         onRequestClose={() => setModalVisible(false)}
+//       >
+//         <View style={styles.modalOverlay}>
+//           <View style={styles.modalContent}>
+//             {selectedIndex !== null && data[selectedIndex] !== null && (
+//               <>
+//                 <Text style={styles.modalTitle}>{labels[selectedIndex] || `#${selectedIndex + 1}`}</Text>
+//                 <Text style={styles.modalText}>时间: {data[selectedIndex]} 分钟</Text>
+//                 <Text style={styles.modalText}>组数: {sets[selectedIndex]}</Text>
+//                 <Text style={styles.modalText}>重量: {volumes[selectedIndex]} kg</Text>
+//               </>
+//             )}
+//             <Pressable onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
+//               <Text style={styles.modalCloseText}>关闭</Text>
+//             </Pressable>
+//           </View>
+//         </View>
+//       </Modal>
 
 //       <View style={styles.todayCard}>
-//         <Text style={styles.todayLabel}>{todayLabel}</Text>
-//         <Text style={styles.todayValue}>{todayValue} min</Text>
+//         <Text style={styles.todayLabel}>{getDateRangeLabel(activeTab, 0)} 训练时间</Text>
+//         <Text style={styles.todayValue}>{todayValue} 分钟</Text>
 //       </View>
 //     </ScrollView>
-//   )
+//   );
 // }
 
 // const styles = StyleSheet.create({
-//   container: { flexGrow: 1, paddingBottom: 100, backgroundColor: "#fff" },
-//   title: { fontSize: 28, fontWeight: "bold", marginHorizontal: 20, marginBottom: 10 },
-//   infoRow: { flexDirection: "row", justifyContent: "space-between", marginHorizontal: 20, marginBottom: 20 },
-//   infoCard: { flex: 1, backgroundColor: "#f4f4f4", marginHorizontal: 5, paddingVertical: 12, borderRadius: 10, alignItems: "center" },
-//   infoLabel: { fontSize: 14, color: "#555", marginBottom: 4 },
-//   infoValue: { fontSize: 18, fontWeight: "bold" },
-//   tabContainer: { flexDirection: "row", justifyContent: "space-around", backgroundColor: "#eee", marginHorizontal: 20, borderRadius: 20, marginBottom: 12, padding: 4 },
-//   tabButton: { flex: 1, paddingVertical: 8, borderRadius: 16, alignItems: "center" },
-//   activeTabButton: { backgroundColor: "#fff" },
+//   container: { flex: 1, backgroundColor: "#fff" },
+//   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+//   title: { fontSize: 24, fontWeight: "bold", marginHorizontal: 20, marginTop: 20, marginBottom: 10 },
+//   summaryRow: { flexDirection: "row", justifyContent: "space-between", marginHorizontal: 20, marginBottom: 16 },
+//   summaryCard: { flex: 1, backgroundColor: "#f3f4f6", marginHorizontal: 6, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
+//   summaryLabel: { fontSize: 14, color: "#666" },
+//   summaryValue: { fontSize: 18, fontWeight: "bold", color: "#111" },
+//   tabContainer: { flexDirection: "row", justifyContent: "space-around", marginHorizontal: 20, marginBottom: 12, padding: 6, borderRadius: 16, backgroundColor: "#eee" },
+//   tabButton: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12 },
+//   activeTabButton: { backgroundColor: "#3b82f6" },
 //   tabText: { fontSize: 14, color: "#333" },
-//   activeTabText: { color: "#3b82f6", fontWeight: "bold" },
-//   chartCard: { marginTop: 5, marginHorizontal: 20, paddingBottom: 40, borderRadius: 16, backgroundColor: "#f9f9f9", position: "relative" },
-//   chartHeader: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 10, marginBottom: 10 },
-//   arrowButton: { paddingHorizontal: 12, paddingVertical: 4 },
-//   arrowText: { fontSize: 20, color: "#3b82f6", fontWeight: "bold" },
-//   dateRangeLabel: { fontSize: 16, fontWeight: "500", color: "#444", textAlign: "center", marginHorizontal: 8 },
+//   activeTabText: { color: "#fff", fontWeight: "bold" },
+//   rangeControl: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 8 },
+//   arrow: { paddingHorizontal: 12 },
+//   arrowText: { fontSize: 24, color: "#3b82f6", fontWeight: "bold" },
+//   rangeLabel: { fontSize: 16, fontWeight: "bold", color: "#333" },
+//   chartWrapper: { paddingHorizontal: 20, paddingVertical: 10, backgroundColor: "#f9f9f9", borderRadius: 16, marginHorizontal: 20 },
 //   chart: { borderRadius: 16 },
-//   yAxisLabel: { position: "absolute", left: 0, top: 140, transform: [{ rotate: "-90deg" }], fontSize: 12, color: "#888" },
-//   tooltipPopup: { position: "absolute", top: 10, backgroundColor: "#fff", borderRadius: 8, padding: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 5, zIndex: 999 },
-//   tooltipText: { fontSize: 14, color: "#333", textAlign: "center" },
-//   todayCard: { marginTop: 40, marginBottom: 20, marginHorizontal: 20, padding: 20, backgroundColor: "#f5f5f5", borderRadius: 16, alignItems: "center" },
-//   todayLabel: { fontSize: 18, marginBottom: 4, fontWeight: "bold" },
-//   todayValue: { fontSize: 24, fontWeight: "bold" },
-// })
+//   emptyState: { height: 240, justifyContent: "center", alignItems: "center" },
+//   emptyText: { fontSize: 16, color: "#888" },
+//   todayCard: { marginTop: 30, marginHorizontal: 20, marginBottom: 30, padding: 20, backgroundColor: "#f5f5f5", borderRadius: 16, alignItems: "center" },
+//   todayLabel: { fontSize: 16, marginBottom: 4, fontWeight: "bold" },
+//   todayValue: { fontSize: 22, fontWeight: "bold" },
+//   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
+//   modalContent: { width: "80%", backgroundColor: "#fff", borderRadius: 16, padding: 20, alignItems: "center" },
+//   modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
+//   modalText: { fontSize: 16, color: "#333", marginBottom: 4 },
+//   modalCloseButton: { marginTop: 20, backgroundColor: "#3b82f6", paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8 },
+//   modalCloseText: { color: "#fff", fontWeight: "bold" },
+// });
 
 
-import React, { useState } from "react"
+
+import dayjs from "dayjs";
+import React, { useState } from "react";
 import {
   ScrollView,
   Text,
@@ -343,98 +282,104 @@ import {
   Dimensions,
   StyleSheet,
   Modal,
-} from "react-native"
-import { LineChart } from "react-native-chart-kit"
+  ActivityIndicator,
+} from "react-native";
+import { LineChart } from "react-native-chart-kit";
 
-const { width: screenWidth } = Dimensions.get("window")
-
-const CHART_DATA = {
-  Day: [0, 0, 0, 0, 0, 0, 0, 60, 60, 35, 0, 0, 0, 60, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  Week: [235, 160, 100, 0, 0, 210, 210],
-  Month: [300, 240, 200, 180, 250, 220, 280, 310, 55, 30, 190, 270, 300, 240, 200, 180, 250, 220, 280, 310, 55, 30, 220, 280, 310, 55, 30, 190, 270, 300],
-  Year: [3200, 5120, 7160, 2900, 2300, 4200, 1500, 5120, 7160, 2900, 2300, 4200],
-}
+const { width: screenWidth } = Dimensions.get("window");
 
 const SCOPE_LABELS = {
-  Day: Array.from({ length: 24 }, (_, i) => i % 6 === 0 ? i.toString() : ""),
+  Day: Array.from({ length: 24 }, (_, i) => (i % 6 === 0 ? i.toString() : "")),
   Week: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  Month: Array.from({ length: 30 }, (_, i) => (i + 1) % 6 === 0 ? (i + 1).toString() : ""),
+  Month: Array.from({ length: 30 }, (_, i) => ((i + 1) % 6 === 0 ? (i + 1).toString() : "")),
   Year: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-}
+};
 
-const generateSetsAndVolumeFromTime = (chartData) => {
-  const chartVolume = {}
-  const chartSets = {}
-  const chartExerciseDetail = {}
-  const exercises = ["Bench Press", "Squat", "Deadlift", "Overhead Press"]
+const TAB_OPTIONS = ["Day", "Week", "Month", "Year"];
 
-  for (const scope in chartData) {
-    const timeSeries = chartData[scope]
-    chartVolume[scope] = []
-    chartSets[scope] = []
-    chartExerciseDetail[scope] = []
+const getSpecificDate = (tab, offset, index) => {
+  const now = dayjs();
 
-    for (const time of timeSeries) {
-      if (time === 0) {
-        chartVolume[scope].push(0)
-        chartSets[scope].push(0)
-        chartExerciseDetail[scope].push({})
-        continue
-      }
-
-      const avgSetDuration = 5
-      const setsCount = Math.max(1, Math.floor(time / avgSetDuration))
-      const setsPerExercise = Math.floor(setsCount / exercises.length)
-      let remainingSets = setsCount
-      let totalVolume = 0
-      const exerciseData = {}
-
-      for (const ex of exercises) {
-        const exSets = ex === exercises[exercises.length - 1] ? remainingSets : setsPerExercise
-        remainingSets -= exSets
-
-        let exVolume = 0
-        for (let i = 0; i < exSets; i++) {
-          const weight = [40, 50, 60, 70][Math.floor(Math.random() * 4)]
-          const reps = [8, 10, 12][Math.floor(Math.random() * 3)]
-          exVolume += weight * reps
-        }
-
-        totalVolume += exVolume
-        exerciseData[ex] = { sets: exSets, volume: exVolume }
-      }
-
-      chartVolume[scope].push(totalVolume)
-      chartSets[scope].push(setsCount)
-      chartExerciseDetail[scope].push(exerciseData)
-    }
+  if (tab === "Day") {
+    return now.subtract(offset, "day").hour(index).format("YYYY-MM-DD HH:00");
   }
 
-  return { chartVolume, chartSets, chartExerciseDetail }
-}
+  if (tab === "Week") {
+    const date = now.subtract(offset * 7, "day").subtract(6 - index, "day").startOf("day");
+    return date.format("YYYY-MM-DD");
+  }
 
-const { chartVolume: CHART_VOLUME, chartSets: CHART_SETS, chartExerciseDetail: CHART_EXERCISE_DETAIL } = generateSetsAndVolumeFromTime(CHART_DATA)
+  if (tab === "Month") {
+    return now.subtract(offset, "month").subtract(29 - index, "day").format("YYYY-MM-DD");
+  }
 
-export function ReportView() {
-  const [activeTab, setActiveTab] = useState("Week")
-  const [selectedIndex, setSelectedIndex] = useState(null)
-  const [modalVisible, setModalVisible] = useState(false)
+  if (tab === "Year") {
+    return now.subtract(offset, "year").startOf("year").add(index, "month").format("YYYY-MM");
+  }
 
-  const data = CHART_DATA[activeTab]
-  const sets = CHART_SETS[activeTab]
-  const volumes = CHART_VOLUME[activeTab]
-  const labels = SCOPE_LABELS[activeTab]
+  return "";
+};
 
-  const chartData = {
-    labels: labels,
+const getDateRangeLabel = (tab, offset) => {
+  const now = dayjs();
+
+  if (tab === "Day") {
+    return now.subtract(offset, "day").format("YYYY-MM-DD");
+  }
+
+  if (tab === "Week") {
+    const start = now.subtract(offset * 7 + 6, "day").startOf("day");
+    const end = now.subtract(offset * 7, "day").startOf("day");
+    return `${start.format("YYYY-MM-DD")} - ${end.format("YYYY-MM-DD")}`;
+  }
+
+  if (tab === "Month") {
+    return now.subtract(offset, "month").format("YYYY-MM");
+  }
+
+  if (tab === "Year") {
+    return `${now.year() - offset}`;
+  }
+
+  return "";
+};
+
+export function ReportView({ chartData, setsData, volumeData, summaryStats, loading, workoutDetails }) {
+  const [activeTab, setActiveTab] = useState("Week");
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [offset, setOffset] = useState(0);
+
+  const SCOPE_SIZE = {
+    Day: 24,
+    Week: 7,
+    Month: 30,
+    Year: 12,
+  };
+
+  const windowedData = (data, offset, size) => {
+    const start = offset * size;
+    return data.slice(start, start + size).concat(Array(Math.max(0, size - data.length)).fill(0));
+  };
+
+  const data = windowedData(chartData[activeTab] || [], offset, SCOPE_SIZE[activeTab]);
+  const sets = windowedData(setsData[activeTab] || [], offset, SCOPE_SIZE[activeTab]);
+  const volumes = windowedData(volumeData[activeTab] || [], offset, SCOPE_SIZE[activeTab]);
+
+  const labels = SCOPE_LABELS[activeTab];
+  const chartRangeLabel = getDateRangeLabel(activeTab, offset);
+  const todayValue = data.reduce((a, b) => a + b, 0);
+
+  const chartContent = {
+    labels,
     datasets: [
       {
-        data: data,
+        data: data.length > 0 ? data : [0],
         color: () => "#3b82f6",
         strokeWidth: 2,
       },
     ],
-  }
+  };
 
   const chartConfig = {
     backgroundGradientFrom: "#fff",
@@ -442,79 +387,55 @@ export function ReportView() {
     decimalPlaces: 0,
     color: () => "#3b82f6",
     labelColor: () => "#666",
-    propsForDots: {
-      r: "4",
-      strokeWidth: "2",
-      stroke: "#3b82f6",
-      fill: "#fff",
-    },
-    propsForBackgroundLines: {
-      strokeDasharray: "0",
-      stroke: "#eee",
-    },
-  }
+    propsForDots: { r: "4", strokeWidth: "2", stroke: "#3b82f6", fill: "#fff" },
+    propsForBackgroundLines: { strokeDasharray: "0", stroke: "#eee" },
+  };
 
   const handleDataPointClick = ({ index }) => {
-    setSelectedIndex(index)
-    setModalVisible(true)
+    setSelectedIndex(index);
+    setModalVisible(true);
+  };
+
+  const selectedKey = selectedIndex !== null ? getSpecificDate(activeTab, offset, selectedIndex) : null;
+  const selectedDetail = selectedKey && workoutDetails[activeTab]?.[selectedKey];
+
+  if (loading) {
+    return <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#3b82f6" /></View>;
   }
-
-  const totalWorkouts = CHART_SETS["Year"].reduce((a, b) => a + b, 0)
-  const totalTime = CHART_DATA["Year"].reduce((a, b) => a + b, 0)
-  const totalVolume = CHART_VOLUME["Year"].reduce((a, b) => a + b, 0)
-
-  const todayValue = CHART_DATA[activeTab].reduce((a, b) => a + b, 0)
-  const todayLabel = {
-    Day: "Today",
-    Week: "This Week",
-    Month: "This Month",
-    Year: "This Year",
-  }[activeTab]
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Workout Report</Text>
+      <Text style={styles.title}>Total report</Text>
 
       <View style={styles.summaryRow}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Workouts</Text>
-          <Text style={styles.summaryValue}>{totalWorkouts}</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Time(min)</Text>
-          <Text style={styles.summaryValue}>{totalTime}</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Volume(kg)</Text>
-          <Text style={styles.summaryValue}>{totalVolume}</Text>
-        </View>
+        <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Workouts</Text><Text style={styles.summaryValue}>{summaryStats.workouts}</Text></View>
+        <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Time(min)</Text><Text style={styles.summaryValue}>{summaryStats.time}</Text></View>
+        <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Volume(kg)</Text><Text style={styles.summaryValue}>{summaryStats.volume}</Text></View>
       </View>
 
       <View style={styles.tabContainer}>
-  {Object.keys(CHART_DATA)
-    .filter(tab => tab !== "Day") // 去除 Day
-    .map((tab) => (
-      <Pressable
-        key={tab}
-        onPress={() => {
-          setActiveTab(tab)
-          setSelectedIndex(null)
-        }}
-        style={[styles.tabButton, tab === activeTab && styles.activeTabButton]}
-      >
-        <Text style={[styles.tabText, tab === activeTab && styles.activeTabText]}>
-          {tab}
-        </Text>
-      </Pressable>
-    ))}
-</View>
+        {TAB_OPTIONS.map((tab) => (
+          <Pressable
+            key={tab}
+            onPress={() => { setActiveTab(tab); setOffset(0); setSelectedIndex(null); }}
+            style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
+          >
+            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+          </Pressable>
+        ))}
+      </View>
 
+      <View style={styles.rangeControl}>
+        <Pressable onPress={() => setOffset((prev) => prev + 1)} style={styles.arrow}><Text style={styles.arrowText}>←</Text></Pressable>
+        <Text style={styles.rangeLabel}>{chartRangeLabel}</Text>
+        <Pressable onPress={() => setOffset((prev) => Math.max(0, prev - 1))} style={styles.arrow}><Text style={styles.arrowText}>→</Text></Pressable>
+      </View>
 
       <View style={styles.chartWrapper}>
         <LineChart
-          data={chartData}
+          data={chartContent}
           width={screenWidth - 40}
-          height={220}
+          height={240}
           chartConfig={chartConfig}
           bezier
           fromZero
@@ -525,141 +446,70 @@ export function ReportView() {
         />
       </View>
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal animationType="fade" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             {selectedIndex !== null && (
               <>
                 <Text style={styles.modalTitle}>{labels[selectedIndex] || `#${selectedIndex + 1}`}</Text>
-                <Text style={styles.modalText}>Time: {data[selectedIndex]} min</Text>
-                <Text style={styles.modalText}>Sets: {sets[selectedIndex]}</Text>
-                <Text style={styles.modalText}>Volume: {volumes[selectedIndex]} kg</Text>
-                <Text style={[styles.modalText, { marginTop: 12 }]}>Details:</Text>
-                {Object.entries(CHART_EXERCISE_DETAIL[activeTab][selectedIndex] || {}).map(
-                  ([exercise, { sets, volume }]) => (
-                    <Text key={exercise} style={styles.modalText}>
-                      - {exercise}: {sets} sets, {volume} kg
-                    </Text>
-                  )
+                <Text style={styles.modalText}>time: {data[selectedIndex]} min</Text>
+                <Text style={styles.modalText}>sets: {sets[selectedIndex]}</Text>
+                <Text style={styles.modalText}>volume: {volumes[selectedIndex]} kg</Text>
+                <Text style={[styles.modalText, { marginTop: 10 }]}>date: {selectedKey}</Text>
+                {selectedDetail?.length > 0 ? (
+                  selectedDetail.map((ex, idx) => (
+                    <Text key={idx} style={styles.modalText}>- {ex.name}: {ex.sets} set × {ex.reps} reps × {ex.weight} kg</Text>
+                  ))
+                ) : (
+                  <Text style={styles.modalText}>no details</Text>
                 )}
-                <Pressable onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
-                  <Text style={styles.modalCloseText}>Close</Text>
-                </Pressable>
               </>
             )}
+            <Pressable onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
+              <Text style={styles.modalCloseText}>close</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
 
       <View style={styles.todayCard}>
-        <Text style={styles.todayLabel}>Workout Time for {todayLabel}</Text>
+        <Text style={styles.todayLabel}>{getDateRangeLabel(activeTab, 0)} workout time</Text>
         <Text style={styles.todayValue}>{todayValue} min</Text>
       </View>
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 24, fontWeight: "bold", marginHorizontal: 20, marginTop: 20, marginBottom: 10 },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: 20,
-    marginBottom: 12,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: "#f3f4f6",
-    marginHorizontal: 4,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  summaryLabel: { fontSize: 13, color: "#555" },
+  summaryRow: { flexDirection: "row", justifyContent: "space-between", marginHorizontal: 20, marginBottom: 16 },
+  summaryCard: { flex: 1, backgroundColor: "#f3f4f6", marginHorizontal: 6, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
+  summaryLabel: { fontSize: 14, color: "#666" },
   summaryValue: { fontSize: 18, fontWeight: "bold", color: "#111" },
-  tabContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginHorizontal: 20,
-    marginBottom: 10,
-    padding: 6,
-    borderRadius: 16,
-    backgroundColor: "#eee",
-  },
-  tabButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-  },
-  activeTabButton: {
-    backgroundColor: "#3b82f6",
-  },
-  tabText: {
-    fontSize: 14,
-  },
-  activeTabText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  chartWrapper: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 16,
-    marginHorizontal: 20,
-  },
-  chart: {
-    borderRadius: 12,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    width: "80%",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    alignItems: "center",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  modalText: {
-    fontSize: 16,
-    color: "#333",
-    marginBottom: 4,
-  },
-  modalCloseButton: {
-    marginTop: 20,
-    backgroundColor: "#3b82f6",
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-  },
-  modalCloseText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  todayCard: {
-    marginTop: 30,
-    marginHorizontal: 20,
-    marginBottom: 10,  
-    padding: 20,
-    borderRadius: 14,
-    backgroundColor: "#f4f4f4",
-    alignItems: "center",
-  },
+  tabContainer: { flexDirection: "row", justifyContent: "space-around", marginHorizontal: 20, marginBottom: 12, padding: 6, borderRadius: 16, backgroundColor: "#eee" },
+  tabButton: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12 },
+  activeTabButton: { backgroundColor: "#3b82f6" },
+  tabText: { fontSize: 14, color: "#333" },
+  activeTabText: { color: "#fff", fontWeight: "bold" },
+  rangeControl: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  arrow: { paddingHorizontal: 12 },
+  arrowText: { fontSize: 24, color: "#3b82f6", fontWeight: "bold" },
+  rangeLabel: { fontSize: 16, fontWeight: "bold", color: "#333" },
+  chartWrapper: { paddingHorizontal: 20, paddingVertical: 10, backgroundColor: "#f9f9f9", borderRadius: 16, marginHorizontal: 20 },
+  chart: { borderRadius: 16 },
+  todayCard: { marginTop: 30, marginHorizontal: 20, marginBottom: 30, padding: 20, backgroundColor: "#f5f5f5", borderRadius: 16, alignItems: "center" },
   todayLabel: { fontSize: 16, marginBottom: 4, fontWeight: "bold" },
   todayValue: { fontSize: 22, fontWeight: "bold" },
-})
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
+  modalContent: { width: "80%", backgroundColor: "#fff", borderRadius: 16, padding: 20, alignItems: "center" },
+  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
+  modalText: { fontSize: 16, color: "#333", marginBottom: 4 },
+  modalCloseButton: { marginTop: 20, backgroundColor: "#3b82f6", paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8 },
+  modalCloseText: { color: "#fff", fontWeight: "bold" },
+});
+
+
+
+

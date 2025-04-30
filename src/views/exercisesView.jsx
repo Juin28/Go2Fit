@@ -164,6 +164,7 @@ export function ExercisesView(props) {
   function handleExerciseSelectACB(exercise) {
     console.log('Exercise selected:', exercise.name);
 
+    console.log("isadding to training"+isAddToTrainingMode)
     if (isAddToTrainingMode) {
       // Show confirmation alert before adding to training session
       Alert.alert(
