@@ -1,3 +1,4 @@
+
 import dayjs from "dayjs";
 import React, { useState } from "react";
 import {
@@ -23,49 +24,41 @@ const SCOPE_LABELS = {
 
 const TAB_OPTIONS = ["Week", "Month", "Year"];
 
-const getSpecificDate = (tab, offset, index) => {
+function formatMinutesToHourMin(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h > 0 ? `${h} hour${h > 1 ? 's' : ''} ` : ''}${m} min`;
+}
+
+function getSpecificDate(tab, offset, index) {
   const now = dayjs();
 
-  if (tab === "Day") {
-    return now.subtract(offset, "day").hour(index).format("YYYY-MM-DD HH:00");
-  }
-
   if (tab === "Week") {
-    const startOfWeek = now.subtract(offset * 7, "day").startOf("week").add(1, "day"); 
-    return startOfWeek.add(index, "day").format("YYYY-MM-DD");
+    const base = now.subtract(offset, "week").startOf("week").add(1, "day");
+    return base.add(index, "day").format("YYYY-MM-DD");
   }
 
-  
-
-  // if (tab === "Month") {
-  //   return now.subtract(offset, "month").subtract(29 - index, "day").format("YYYY-MM-DD");
-  // }
   if (tab === "Month") {
     const base = now.subtract(offset, "month").startOf("month");
     const target = base.add(index, "day");
     if (target.month() !== base.month()) return "";
     return target.format("YYYY-MM-DD");
   }
-  
-  
+
   if (tab === "Year") {
     return now.subtract(offset, "year").startOf("year").add(index, "month").format("YYYY-MM");
   }
 
   return "";
-};
+}
 
-const getDateRangeLabel = (tab, offset) => {
+function getDateRangeLabel(tab, offset) {
   const now = dayjs();
 
-  if (tab === "Day") {
-    return now.subtract(offset, "day").format("YYYY-MM-DD");
-  }
-
   if (tab === "Week") {
-    const start = now.subtract(offset * 7 + 6, "day").startOf("day");
-    const end = now.subtract(offset * 7, "day").startOf("day");
-    return `${start.format("YYYY-MM-DD")} - ${end.format("YYYY-MM-DD")}`;
+    const monday = now.subtract(offset, "week").startOf("week").add(1, "day");
+    const sunday = monday.add(6, "day");
+    return `${monday.format("YYYY-MM-DD")} - ${sunday.format("YYYY-MM-DD")}`;
   }
 
   if (tab === "Month") {
@@ -77,7 +70,7 @@ const getDateRangeLabel = (tab, offset) => {
   }
 
   return "";
-};
+}
 
 export function ReportView({ chartData, setsData, volumeData, summaryStats, loading, workoutDetails }) {
   const [activeTab, setActiveTab] = useState("Week");
@@ -85,26 +78,20 @@ export function ReportView({ chartData, setsData, volumeData, summaryStats, load
   const [modalVisible, setModalVisible] = useState(false);
   const [offset, setOffset] = useState(0);
 
-  const SCOPE_SIZE = {
-    Day: 24,
-    Week: 7,
-    Month: 30,
-    Year: 12,
-  };
+  const SCOPE_SIZE = { Week: 7, Month: 30, Year: 12 };
+  const labels = SCOPE_LABELS[activeTab];
+  const chartRangeLabel = getDateRangeLabel(activeTab, offset);
 
-  const windowedData = (data, offset, size) => {
+  const windowedData = (data = [], offset, size) => {
     const start = offset * size;
     return data.slice(start, start + size).concat(Array(Math.max(0, size - data.length)).fill(0));
   };
 
-  const data = windowedData(chartData[activeTab] || [], offset, SCOPE_SIZE[activeTab]);
-  const sets = windowedData(setsData[activeTab] || [], offset, SCOPE_SIZE[activeTab]);
-  const volumes = windowedData(volumeData[activeTab] || [], offset, SCOPE_SIZE[activeTab]);
+  const data = windowedData(chartData[activeTab], offset, SCOPE_SIZE[activeTab]);
+  const sets = windowedData(setsData[activeTab], offset, SCOPE_SIZE[activeTab]);
+  const volumes = windowedData(volumeData[activeTab], offset, SCOPE_SIZE[activeTab]);
 
-  const labels = SCOPE_LABELS[activeTab];
-  const chartRangeLabel = getDateRangeLabel(activeTab, offset);
   const todayValue = data.reduce((a, b) => a + b, 0);
-
   const chartContent = {
     labels,
     datasets: [
@@ -126,13 +113,13 @@ export function ReportView({ chartData, setsData, volumeData, summaryStats, load
     propsForBackgroundLines: { strokeDasharray: "0", stroke: "#eee" },
   };
 
+  const selectedKey = selectedIndex !== null ? getSpecificDate(activeTab, offset, selectedIndex) : null;
+  const selectedDetail = selectedKey && workoutDetails[activeTab]?.[selectedKey];
+
   const handleDataPointClick = ({ index }) => {
     setSelectedIndex(index);
     setModalVisible(true);
   };
-
-  const selectedKey = selectedIndex !== null ? getSpecificDate(activeTab, offset, selectedIndex) : null;
-  const selectedDetail = selectedKey && workoutDetails[activeTab]?.[selectedKey];
 
   if (loading) {
     return <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#3b82f6" /></View>;
@@ -140,12 +127,21 @@ export function ReportView({ chartData, setsData, volumeData, summaryStats, load
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Total report</Text>
+      <Text style={styles.title}>Training Report</Text>
 
       <View style={styles.summaryRow}>
-        <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Workouts</Text><Text style={styles.summaryValue}>{summaryStats.workouts}</Text></View>
-        <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Time(min)</Text><Text style={styles.summaryValue}>{summaryStats.time}</Text></View>
-        <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Volume(kg)</Text><Text style={styles.summaryValue}>{summaryStats.volume}</Text></View>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>Workouts</Text>
+          <Text style={styles.summaryValue}>{summaryStats.workouts}</Text>
+        </View>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>Time</Text>
+          <Text style={styles.summaryValue}>{formatMinutesToHourMin(summaryStats.time)||0}</Text>
+        </View>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>Volume</Text>
+          <Text style={styles.summaryValue}>{summaryStats.volume} kg</Text>
+        </View>
       </View>
 
       <View style={styles.tabContainer}>
@@ -187,13 +183,12 @@ export function ReportView({ chartData, setsData, volumeData, summaryStats, load
             {selectedIndex !== null && (
               <>
                 <Text style={styles.modalTitle}>{labels[selectedIndex] || `#${selectedIndex + 1}`}</Text>
-                <Text style={styles.modalText}>time: {data[selectedIndex]} min</Text>
-                {/* <Text style={styles.modalText}>sets: {sets[selectedIndex]}</Text> */}
+                <Text style={styles.modalText}>time: {formatMinutesToHourMin(data[selectedIndex])||0}</Text>
                 <Text style={styles.modalText}>volume: {volumes[selectedIndex]} kg</Text>
                 <Text style={[styles.modalText, { marginTop: 10 }]}>date: {selectedKey}</Text>
                 {selectedDetail?.length > 0 ? (
                   selectedDetail.map((ex, idx) => (
-                    <Text key={idx} style={styles.modalText}>- {ex.name}: {ex.sets} set × {ex.reps} reps × {ex.weight} kg</Text>
+                    <Text key={idx} style={styles.modalText}>- {ex.name}: {ex.sets} sets × {ex.reps} reps × {ex.weight} kg</Text>
                   ))
                 ) : (
                   <Text style={styles.modalText}>no details</Text>
@@ -208,10 +203,8 @@ export function ReportView({ chartData, setsData, volumeData, summaryStats, load
       </Modal>
 
       <View style={styles.todayCard}>
-        {/* <Text style={styles.todayLabel}>{getDateRangeLabel(activeTab, 0)} workout time</Text> */}
         <Text style={styles.todayLabel}>workout time for this {activeTab.toLowerCase()}</Text>
-
-        <Text style={styles.todayValue}>{todayValue} min</Text>
+        <Text style={styles.todayValue}>{formatMinutesToHourMin(todayValue)||0}</Text>
       </View>
     </ScrollView>
   );
@@ -246,7 +239,3 @@ const styles = StyleSheet.create({
   modalCloseButton: { marginTop: 20, backgroundColor: "#3b82f6", paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8 },
   modalCloseText: { color: "#fff", fontWeight: "bold" },
 });
-
-
-
-
