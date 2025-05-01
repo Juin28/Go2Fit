@@ -84,13 +84,13 @@ export const Report = observer(function ReportPresenter({ model }) {
           });
 
           totalWorkouts++;
-          const durationInMin = Math.round((sessionDuration || 0) / 60);
+          const durationInMin = Math.round((sessionDuration || 0));
           totalTime += durationInMin;
           totalVolume += sessionVolume;
 
           // Day
           if (sessionTime.isSame(today, "day")) {
-            day[hour] += sessionDuration/60;
+            day[hour] += sessionDuration;
             daySets[hour] += sessionSets;
             dayVolume[hour] += sessionVolume;
 
@@ -106,7 +106,7 @@ export const Report = observer(function ReportPresenter({ model }) {
           // Week
           if (diffWeeks >= 0 && diffWeeks < 10 && weekDayIndex >= 0 && weekDayIndex < 7) {
             const weekIdx = diffWeeks * 7 + weekDayIndex;
-            week[weekIdx] += Math.floor(sessionDuration / 60);
+            week[weekIdx] += Math.floor(sessionDuration);
             weekSets[weekIdx] += sessionSets;
             weekVolume[weekIdx] += sessionVolume;
 
@@ -126,7 +126,7 @@ export const Report = observer(function ReportPresenter({ model }) {
             const diffDays = sessionTime.startOf("day").diff(base, "day");
             if (diffDays >= 0 && diffDays < 30) {
               const monthIdx = offset * 30 + diffDays;
-              month[monthIdx] += Math.floor(sessionDuration / 60);
+              month[monthIdx] += Math.floor(sessionDuration);
               monthSets[monthIdx] += sessionSets;
               monthVolume[monthIdx] += sessionVolume;
 
@@ -145,7 +145,7 @@ export const Report = observer(function ReportPresenter({ model }) {
           // Year
           if (diffYears >= 0 && diffYears < 3) {
             const yearIdx = diffYears * 12 + sessionTime.month();
-            year[yearIdx] += Math.floor(sessionDuration / 60);
+            year[yearIdx] += Math.floor(sessionDuration);
             yearSets[yearIdx] += sessionSets;
             yearVolume[yearIdx] += sessionVolume;
 
