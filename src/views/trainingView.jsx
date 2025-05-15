@@ -602,7 +602,7 @@ export function TrainingView({ session, onAddExercise, onSave, error, getCurrent
           onPress={() => {
             try {
               console.log("Navigating to home to create new session");
-              router.push('/'); // Navigate to home/root route
+              router.push('/home'); // Navigate to home/root route
             } catch (error) {
               console.error("Navigation error:", error);
               // Fallback if direct navigation fails
