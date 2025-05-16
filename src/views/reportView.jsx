@@ -1,6 +1,8 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
+dayjs.extend(isoWeek);
 import React, { useState } from "react";
 import {
   ScrollView,
@@ -33,10 +35,14 @@ const getSpecificDate = (tab, offset, index) => {
     return now.subtract(offset, "day").hour(index).format("YYYY-MM-DD HH:00");
   }
 
-  if (tab === "Week") {
-    const base = now.subtract(offset, "week").startOf("week").add(1, "day");
-    return base.add(index, "day").format("YYYY-MM-DD");
-  }
+  // if (tab === "Week") {
+  //   const base = now.subtract(offset, "week").startOf("week").add(1, "day");
+  //   return base.add(index, "day").format("YYYY-MM-DD");
+  // }
+  if (tab === "Week") {                                  
+      const base = now.subtract(offset, "week").startOf("isoWeek");
+     return base.add(index, "day").format("YYYY-MM-DD");
+    }
 
   if (tab === "Month") {
     const base = now.subtract(offset, "month").startOf("month");
@@ -60,10 +66,11 @@ const getDateRangeLabel = (tab, offset) => {
   }
 
   if (tab === "Week") {
-    const monday = now.subtract(offset, "week").startOf("week").add(1, "day");
-    const sunday = monday.add(6, "day");
-    return `${monday.format("YYYY-MM-DD")} - ${sunday.format("YYYY-MM-DD")}`;
-  }
+      const monday = now.subtract(offset, "week").startOf("isoWeek");
+      const sunday = monday.add(6, "day");
+      return `${monday.format("YYYY-MM-DD")} – ${sunday.format("YYYY-MM-DD")}`;
+    }
+
 
   if (tab === "Month") {
     return now.subtract(offset, "month").format("YYYY-MM");
